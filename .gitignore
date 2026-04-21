@@ -1,0 +1,16 @@
+# Python / env
+env/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Data / large files
+Data/
+*.pdf
+
+# system
+.DS_Store
