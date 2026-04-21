@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import EnrollModal from "@/components/EnrollModal";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
-import { urduFont } from "@/lib/urduFont";
 
 const COURSE_NAME = "Course 3";
 const COURSE_LEARN_PATH = "/course3/learn";
