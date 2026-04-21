@@ -549,7 +549,7 @@ export default function Course1() {
              {urdu ? "جدید آٹوموٹیو دنیا کے لیے بنے کورس میں شامل ہوں۔ 80% عملی تربیت اور 100% توجہ آپ کی کامیابی پر۔" : "Join the course designed for the modern automotive world. 80% practical training, 100% focused on your success."}
            </p>
            <button className="bg-black text-white px-12 py-5 rounded-2xl font-bold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 shadow-xl">
-             {urdu ? "آج ہی داخلہ لیں" : "Enroll in Course 2 Today"}
+             {urdu ? "آج ہی داخلہ لیں" : "Enroll in Course 1 Today"}
            </button>
          </div>
       </section>
