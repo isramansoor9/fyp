@@ -6,6 +6,8 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/AuthContext";
 import QuizModal from "@/components/QuizModal";
 import ContentLoader from "@/components/ContentLoader";
+import { isUrdu } from "@/lib/uiLanguage";
+import { urduFont } from "@/lib/urduFont";
 
 type ContentState = {
   title: string | null;
@@ -33,6 +35,7 @@ function ContentView() {
   setUserRef.current = setUser;
   const titleParam = searchParams.get("title");
   const topicParam = searchParams.get("topic");
+  const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
 
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
@@ -198,7 +201,7 @@ function ContentView() {
   if (!authLoading && !isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Redirecting to login...</p>
+        <p className="text-gray-500">{urdu ? "لاگ اِن کی طرف منتقل کیا جا رہا ہے..." : "Redirecting to login..."}</p>
       </div>
     );
   }
@@ -207,12 +210,12 @@ function ContentView() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
         <div className="text-center p-8">
-          <p className="text-gray-500 mb-4">No subtopic selected.</p>
+          <p className="text-gray-500 mb-4">{urdu ? "کوئی سب ٹاپک منتخب نہیں کیا گیا۔" : "No subtopic selected."}</p>
           <button
             onClick={() => router.push("/course1/learn")}
             className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Back to Curriculum
+            {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
           </button>
         </div>
       </div>
@@ -220,22 +223,22 @@ function ContentView() {
   }
 
   if (state.loading) {
-    return <ContentLoader />;
+    return <ContentLoader urdu={urdu} />;
   }
 
   if (state.error || !state.content) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
         <div className="text-center p-8 max-w-md">
-          <p className="text-gray-700 font-medium mb-2">Content not found</p>
+          <p className="text-gray-700 font-medium mb-2">{urdu ? "مواد نہیں ملا" : "Content not found"}</p>
           <p className="text-gray-500 text-sm mb-4">
-            No content found for &quot;{state.title || titleParam}&quot;.
+            {urdu ? `"${state.title || titleParam}" کے لیے مواد نہیں ملا۔` : `No content found for "${state.title || titleParam}".`}
           </p>
           <button
             onClick={() => router.push("/course1/learn")}
             className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Back to Curriculum
+            {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
           </button>
         </div>
       </div>
@@ -243,7 +246,7 @@ function ContentView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -251,14 +254,14 @@ function ContentView() {
               <span className="text-white font-bold text-lg">T</span>
             </div>
             <p className="text-sm font-bold text-gray-900">
-              Course 1 · Content
+              {urdu ? "کورس 1 · مواد" : "Course 1 · Content"}
             </p>
           </div>
           <button
             onClick={() => router.push("/course1/learn")}
             className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Back to Curriculum
+            {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
           </button>
         </div>
       </nav>
@@ -277,7 +280,7 @@ function ContentView() {
                 onClick={() => setShowQuiz(true)}
                 className="w-full py-4 px-6 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 transition-all duration-300 hover:scale-[1.01] flex items-center justify-center gap-2 shadow-lg"
               >
-                Attempt Quiz
+                {urdu ? "کوئز شروع کریں" : "Attempt Quiz"}
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -286,9 +289,9 @@ function ContentView() {
           )}
           {quizCompleted && quizReview && (
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Quiz Review</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">{urdu ? "آپ کے کوئز کا جائزہ" : "Your Quiz Review"}</h2>
               <p className="text-xs text-gray-500 mb-4">
-                Submitted at:{" "}
+                {urdu ? "جمع کرانے کا وقت:" : "Submitted at:"}{" "}
                 {quizReview.submittedAt ? new Date(quizReview.submittedAt).toLocaleString() : "—"}
               </p>
               <div className="space-y-4 text-sm">
@@ -341,6 +344,7 @@ function ContentView() {
           userLevel={(user as { level?: string })?.level || "easy"}
           userEmail={(user as { email?: string })?.email}
           userId={(user as { userId?: string })?.userId}
+          urdu={urdu}
         />
       </main>
     </div>

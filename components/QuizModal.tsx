@@ -16,6 +16,7 @@ type QuizModalProps = {
   userEmail?: string;
   userId?: string;
   semester?: string;
+  urdu?: boolean;
 };
 
 export default function QuizModal({
@@ -28,6 +29,7 @@ export default function QuizModal({
   userEmail,
   userId,
   semester = "1",
+  urdu = false,
 }: QuizModalProps) {
   const [step, setStep] = useState<"prompt" | "quiz" | "submitting" | "done">("prompt");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -55,13 +57,13 @@ export default function QuizModal({
       if (course === 3) params.set("semester", semester);
       const res = await fetch(`/api/course${course}/quiz?${params}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load quiz");
-      if (!data.questions?.length) throw new Error("No questions available for this topic.");
+      if (!res.ok) throw new Error(data.error || (urdu ? "کوئز لوڈ نہیں ہو سکا" : "Failed to load quiz"));
+      if (!data.questions?.length) throw new Error(urdu ? "اس عنوان کے لیے سوالات دستیاب نہیں ہیں۔" : "No questions available for this topic.");
       setQuestions(data.questions);
       setAnswers(data.questions.map(() => ""));
       setStep("quiz");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load quiz");
+      setError(e instanceof Error ? e.message : (urdu ? "کوئز لوڈ نہیں ہو سکا" : "Failed to load quiz"));
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export default function QuizModal({
 
   const submitQuiz = async () => {
     if (!userEmail && !userId) {
-      setError("You must be logged in to submit the quiz.");
+      setError(urdu ? "کوئز جمع کرانے کے لیے لاگ اِن ہونا ضروری ہے۔" : "You must be logged in to submit the quiz.");
       return;
     }
     setStep("submitting");
@@ -93,7 +95,7 @@ export default function QuizModal({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit");
+      if (!res.ok) throw new Error(data.error || (urdu ? "کوئز جمع نہیں ہو سکا" : "Failed to submit"));
       setStep("done");
       if (onCompleted) {
         onCompleted({
@@ -104,7 +106,7 @@ export default function QuizModal({
       }
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to submit quiz");
+      setError(e instanceof Error ? e.message : (urdu ? "کوئز جمع نہیں ہو سکا" : "Failed to submit quiz"));
       setStep("quiz");
     }
   };
@@ -157,11 +159,12 @@ export default function QuizModal({
               <BookOpen className="w-10 h-10 text-white" />
             </motion.div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-              Ready for a Quick Quiz?
+              {urdu ? "فوری کوئز کے لیے تیار ہیں؟" : "Ready for a Quick Quiz?"}
             </h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              Test your understanding of &quot;{subtopicTitle}&quot; with 5 personalized questions
-              based on your level. Take your time and answer thoughtfully.
+              {urdu
+                ? `اپنی سطح کے مطابق 5 ذاتی سوالات کے ساتھ "${subtopicTitle}" کی سمجھ چیک کریں۔ سکون سے جواب دیں۔`
+                : `Test your understanding of "${subtopicTitle}" with 5 personalized questions based on your level. Take your time and answer thoughtfully.`}
             </p>
             {error && (
               <p className="text-red-600 text-sm mb-4">{error}</p>
@@ -174,11 +177,11 @@ export default function QuizModal({
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Loading Questions...
+                  {urdu ? "سوالات لوڈ ہو رہے ہیں..." : "Loading Questions..."}
                 </>
               ) : (
                 <>
-                  Attempt Quiz
+                  {urdu ? "کوئز شروع کریں" : "Attempt Quiz"}
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}
@@ -189,7 +192,7 @@ export default function QuizModal({
         {step === "quiz" && (
           <div className="p-8 md:p-12">
             <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b">
-              Quiz: {subtopicTitle}
+              {urdu ? "کوئز:" : "Quiz:"} {subtopicTitle}
             </h2>
             <div className="space-y-8">
                 {questions.map((q, i) => (
@@ -200,13 +203,13 @@ export default function QuizModal({
                   transition={{ delay: i * 0.05 }}
                 >
                   <p className="text-sm font-medium text-gray-500 mb-1">
-                  Question {i + 1} · {q.difficulty}
+                  {urdu ? "سوال" : "Question"} {i + 1} · {q.difficulty}
                   </p>
                   <p className="font-semibold text-gray-900 mb-3">{q.question}</p>
                   <textarea
                   value={answers[i]}
                   onChange={(e) => updateAnswer(i, e.target.value)}
-                  placeholder="Type your answer here..."
+                  placeholder={urdu ? "اپنا جواب یہاں لکھیں..." : "Type your answer here..."}
                   className="w-full min-h-[100px] px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/10 outline-none resize-y transition text-black placeholder-black"
                   rows={4}
                   />
@@ -219,13 +222,13 @@ export default function QuizModal({
                 onClick={onClose}
                 className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
               >
-                Cancel
+                {urdu ? "منسوخ کریں" : "Cancel"}
               </button>
               <button
                 onClick={submitQuiz}
                 className="flex-1 flex items-center justify-center gap-2 bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-all hover:scale-[1.02]"
               >
-                Submit Quiz
+                {urdu ? "کوئز جمع کریں" : "Submit Quiz"}
                 <CheckCircle2 className="w-5 h-5" />
               </button>
             </div>
@@ -235,7 +238,7 @@ export default function QuizModal({
         {step === "submitting" && (
           <div className="p-12 text-center">
             <Loader2 className="w-16 h-16 mx-auto mb-4 text-black animate-spin" />
-            <p className="text-lg font-medium text-gray-700">Submitting your quiz...</p>
+            <p className="text-lg font-medium text-gray-700">{urdu ? "آپ کا کوئز جمع کیا جا رہا ہے..." : "Submitting your quiz..."}</p>
           </div>
         )}
 
@@ -248,15 +251,15 @@ export default function QuizModal({
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle2 className="w-12 h-12 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">Quiz Submitted!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">{urdu ? "کوئز جمع ہو گیا!" : "Quiz Submitted!"}</h2>
             <p className="text-gray-600 mb-8">
-              Your answers have been saved. Great job completing this quiz!
+              {urdu ? "آپ کے جوابات محفوظ ہو گئے ہیں۔ بہت خوب!" : "Your answers have been saved. Great job completing this quiz!"}
             </p>
             <button
               onClick={onClose}
               className="bg-black text-white px-8 py-3 rounded-xl font-semibold hover:bg-gray-800 transition"
             >
-              Close
+              {urdu ? "بند کریں" : "Close"}
             </button>
           </motion.div>
         )}

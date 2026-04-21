@@ -32,7 +32,7 @@ export default function Home() {
   ];
 
   return (
-    <div className={`min-h-screen bg-white text-black ${urdu ? urduFont.className : ""}`}>
+    <div className={`min-h-screen bg-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       {/* Navigation with subtle shadow */}
       <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-sm">
         <div className="flex items-center gap-10">
@@ -137,10 +137,9 @@ export default function Home() {
             {urdu ? "دورانیہ: 3 ماہ" : "Duration: 3 Months"}
           </p>
           <p className="text-gray-500 mt-2 text-base leading-relaxed">
-            Gain practical, hands-on experience as an entry-level helper.
-            This course focuses on skill-based learning to strengthen your
-            technical foundations and prepare you for real-world tasks with
-            confidence.
+            {urdu
+              ? "ابتدائی سطح پر عملی تجربہ حاصل کریں۔ یہ کورس مہارت پر مبنی سیکھنے کے ذریعے آپ کی تکنیکی بنیاد مضبوط کرتا ہے اور حقیقی دنیا کے کاموں کے لیے اعتماد کے ساتھ تیار کرتا ہے۔"
+              : "Gain practical, hands-on experience as an entry-level helper. This course focuses on skill-based learning to strengthen your technical foundations and prepare you for real-world tasks with confidence."}
           </p>
         </div>
           </a>
@@ -164,9 +163,9 @@ export default function Home() {
             {urdu ? "دورانیہ: 6 ماہ" : "Duration: 6 Months"}
           </p>
           <p className="text-gray-500 mt-2 text-base leading-relaxed">
-            Develop hands-on expertise through practical, skill-based
-            training. This course helps you strengthen your technical
-            foundation and gain real-world experience as an electrician.
+            {urdu
+              ? "عملی اور مہارت پر مبنی تربیت کے ذریعے مہارت پیدا کریں۔ یہ کورس آپ کی تکنیکی بنیاد مضبوط کرتا ہے اور بطور الیکٹریشن حقیقی دنیا کا تجربہ فراہم کرتا ہے۔"
+              : "Develop hands-on expertise through practical, skill-based training. This course helps you strengthen your technical foundation and gain real-world experience as an electrician."}
           </p>
         </div>
           </a>
@@ -190,10 +189,9 @@ export default function Home() {
             {urdu ? "دورانیہ: 12 ماہ" : "Duration: 12 Months"}
           </p>
           <p className="text-gray-500 mt-2 text-base leading-relaxed">
-            Gain mastery in advanced auto electrics with immersive,
-            industry-focused, skill-based training. This course equips you
-            with practical expertise to excel in professional automotive
-            environments.
+            {urdu
+              ? "اعلیٰ آٹو الیکٹرکس میں صنعت پر مبنی اور عملی تربیت کے ذریعے مہارت حاصل کریں۔ یہ کورس آپ کو پیشہ ورانہ آٹوموٹیو ماحول میں کامیابی کے لیے مضبوط عملی قابلیت دیتا ہے۔"
+              : "Gain mastery in advanced auto electrics with immersive, industry-focused, skill-based training. This course equips you with practical expertise to excel in professional automotive environments."}
           </p>
         </div>
           </a>
@@ -210,43 +208,45 @@ export default function Home() {
             <div className="p-4 rounded-lg transition-all duration-300 hover:bg-gray-50 hover:shadow-md border border-transparent hover:border-gray-100">
               <h3 className="text-xl font-semibold">{urdu ? "کثیر لسانی سپورٹ (اردو اور انگریزی)" : "Multilingual Support (Urdu & English)"}</h3>
               <p className="text-gray-500 mt-2 text-base leading-relaxed">
-                Learn in the language you're most comfortable with, ensuring
-                better understanding, accessibility, and an inclusive learning
-                experience.
+                {urdu
+                  ? "اپنی پسندیدہ زبان میں سیکھیں تاکہ بہتر سمجھ، آسان رسائی اور جامع تعلیمی تجربہ حاصل ہو۔"
+                  : "Learn in the language you're most comfortable with, ensuring better understanding, accessibility, and an inclusive learning experience."}
               </p>
             </div>
 
             <div className="p-4 rounded-lg transition-all duration-300 hover:bg-gray-50 hover:shadow-md border border-transparent hover:border-gray-100">
               <h3 className="text-xl font-semibold">{urdu ? "پرسنلائزڈ مواد کی تیاری" : "Personalized Content Generation"}</h3>
               <p className="text-gray-500 mt-2 text-base leading-relaxed">
-                Receive learning materials customized to your pace, progress,
-                and preferences, helping you focus on areas that matter most.
+                {urdu
+                  ? "اپنی رفتار، پیش رفت اور ترجیحات کے مطابق ذاتی مواد حاصل کریں تاکہ آپ اہم حصوں پر بہتر توجہ دے سکیں۔"
+                  : "Receive learning materials customized to your pace, progress, and preferences, helping you focus on areas that matter most."}
               </p>
             </div>
 
             <div className="p-4 rounded-lg transition-all duration-300 hover:bg-gray-50 hover:shadow-md border border-transparent hover:border-gray-100">
               <h3 className="text-xl font-semibold">{urdu ? "خودکار کوئزز" : "Automated Quizzes"}</h3>
               <p className="text-gray-500 mt-2 text-base leading-relaxed">
-                Test your knowledge instantly with system-generated quizzes and
-                assessments, providing immediate feedback to track your
-                improvement.
+                {urdu
+                  ? "سسٹم سے تیار کردہ کوئزز اور اسیسمنٹس کے ذریعے فوراً اپنا علم جانچیں اور فوری فیڈبیک سے اپنی بہتری کو ٹریک کریں۔"
+                  : "Test your knowledge instantly with system-generated quizzes and assessments, providing immediate feedback to track your improvement."}
               </p>
             </div>
 
             <div className="p-4 rounded-lg transition-all duration-300 hover:bg-gray-50 hover:shadow-md border border-transparent hover:border-gray-100">
               <h3 className="text-xl font-semibold">{urdu ? "مضمون مخصوص چیٹ بوٹ" : "Subject Specific Chatbot"}</h3>
               <p className="text-gray-500 mt-2 text-base leading-relaxed">
-                Interact with an AI-powered chatbot trained in specific subjects
-                to get accurate, intelligent guidance whenever you need it.
+                {urdu
+                  ? "مخصوص مضامین میں تربیت یافتہ اے آئی چیٹ بوٹ سے بات کریں اور جب چاہیں درست اور ذہین رہنمائی حاصل کریں۔"
+                  : "Interact with an AI-powered chatbot trained in specific subjects to get accurate, intelligent guidance whenever you need it."}
               </p>
             </div>
 
             <div className="p-4 rounded-lg transition-all duration-300 hover:bg-gray-50 hover:shadow-md border border-transparent hover:border-gray-100">
               <h3 className="text-xl font-semibold">{urdu ? "ہسٹری محفوظ کرنا" : "History Saving"}</h3>
               <p className="text-gray-500 mt-2 text-base leading-relaxed">
-                Your learning history is stored to personalize your experience,
-                ensuring future content aligns with your evolving skills and
-                progress.
+                {urdu
+                  ? "آپ کی تعلیمی ہسٹری محفوظ رہتی ہے تاکہ آئندہ مواد آپ کی بڑھتی مہارت اور پیش رفت کے مطابق ہو۔"
+                  : "Your learning history is stored to personalize your experience, ensuring future content aligns with your evolving skills and progress."}
               </p>
             </div>
           </div>
@@ -272,14 +272,11 @@ export default function Home() {
             className="p-6 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-default border border-gray-300"
             style={{ backgroundColor: "#c3bebb" }}
           >
-            <h3 className="font-semibold text-lg mb-2">AI-Powered Learning</h3>
+            <h3 className="font-semibold text-lg mb-2">{urdu ? "اے آئی سے چلنے والی تعلیم" : "AI-Powered Learning"}</h3>
             <p className="text-black text-sm leading-relaxed">
-              Harness the power of artificial intelligence for adaptive,
-              personalized training tailored to your pace and progress. The
-              system analyzes your performance, identifies areas for
-              improvement, and adjusts content for clearer understanding. With
-              AI-guided support, every learner can succeed efficiently and
-              confidently.
+              {urdu
+                ? "مصنوعی ذہانت کی طاقت سے اپنی رفتار اور پیش رفت کے مطابق ذاتی تربیت حاصل کریں۔ نظام آپ کی کارکردگی کا تجزیہ کرتا ہے، بہتری کے حصے بتاتا ہے اور بہتر فہم کے لیے مواد ایڈجسٹ کرتا ہے۔ اے آئی رہنمائی کے ساتھ ہر سیکھنے والا اعتماد اور مؤثریت سے کامیاب ہو سکتا ہے۔"
+                : "Harness the power of artificial intelligence for adaptive, personalized training tailored to your pace and progress. The system analyzes your performance, identifies areas for improvement, and adjusts content for clearer understanding. With AI-guided support, every learner can succeed efficiently and confidently."}
             </p>
           </div>
 
@@ -289,14 +286,12 @@ export default function Home() {
             style={{ backgroundColor: "#c3bebb" }}
           >
             <h3 className="font-semibold text-lg mb-2">
-              Industry-Relevant Skills
+              {urdu ? "صنعت سے متعلقہ مہارتیں" : "Industry-Relevant Skills"}
             </h3>
             <p className="text-black text-sm leading-relaxed">
-              Build practical, job-ready expertise through courses crafted in
-              collaboration with industry professionals. Each module reflects
-              real workplace requirements, ensuring you gain hands-on skills
-              that align with current market demands and prepare you to perform
-              confidently on the job.
+              {urdu
+                ? "صنعتی ماہرین کے تعاون سے بنائے گئے کورسز کے ذریعے عملی اور جاب ریڈی مہارتیں حاصل کریں۔ ہر ماڈیول حقیقی کام کی ضروریات کے مطابق ہے تاکہ آپ موجودہ مارکیٹ کی طلب سے ہم آہنگ ہاتھ سے کام کی صلاحیت حاصل کریں۔"
+                : "Build practical, job-ready expertise through courses crafted in collaboration with industry professionals. Each module reflects real workplace requirements, ensuring you gain hands-on skills that align with current market demands and prepare you to perform confidently on the job."}
             </p>
           </div>
 
@@ -305,13 +300,11 @@ export default function Home() {
             className="p-6 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-default border border-gray-300"
             style={{ backgroundColor: "#c3bebb" }}
           >
-            <h3 className="font-semibold text-lg mb-2">Government Certified</h3>
+            <h3 className="font-semibold text-lg mb-2">{urdu ? "سرکاری طور پر تصدیق شدہ" : "Government Certified"}</h3>
             <p className="text-black text-sm leading-relaxed">
-              Our programs strictly follow NAVTTC and TEVTA standards, ensuring
-              you receive training that meets nationally approved guidelines.
-              Upon completion, you earn a credible, government-recognized
-              certification that enhances your employability and is trusted by
-              industries across the country.
+              {urdu
+                ? "ہمارے پروگرام NAVTTC اور TEVTA کے معیارات کے مطابق ہیں، جس سے آپ قومی سطح پر منظور شدہ رہنما اصولوں کے مطابق تربیت حاصل کرتے ہیں۔ تکمیل پر آپ کو معتبر، سرکاری طور پر تسلیم شدہ سرٹیفکیٹ ملتا ہے جو آپ کی ملازمت کے مواقع بڑھاتا ہے۔"
+                : "Our programs strictly follow NAVTTC and TEVTA standards, ensuring you receive training that meets nationally approved guidelines. Upon completion, you earn a credible, government-recognized certification that enhances your employability and is trusted by industries across the country."}
             </p>
           </div>
 
@@ -320,13 +313,11 @@ export default function Home() {
             className="p-6 rounded-lg shadow-sm transition-all duration-300 transform hover:scale-105 hover:shadow-2xl cursor-default border border-gray-300"
             style={{ backgroundColor: "#c3bebb" }}
           >
-            <h3 className="font-semibold text-lg mb-2">Job-Ready Outcomes</h3>
+            <h3 className="font-semibold text-lg mb-2">{urdu ? "ملازمت کے لیے تیار نتائج" : "Job-Ready Outcomes"}</h3>
             <p className="text-black text-sm leading-relaxed">
-              Graduate fully prepared for the workforce with strong technical
-              skills, practical experience, and recognized certification. Our
-              training builds the confidence and competence you need to begin
-              your career successfully or take the next step toward
-              advancement.
+              {urdu
+                ? "مضبوط تکنیکی مہارت، عملی تجربے اور تسلیم شدہ سرٹیفکیشن کے ساتھ ورک فورس کے لیے مکمل طور پر تیار ہوں۔ ہماری تربیت آپ میں وہ اعتماد اور صلاحیت پیدا کرتی ہے جو کامیاب کیریئر کے آغاز اور ترقی کے لیے ضروری ہے۔"
+                : "Graduate fully prepared for the workforce with strong technical skills, practical experience, and recognized certification. Our training builds the confidence and competence you need to begin your career successfully or take the next step toward advancement."}
             </p>
           </div>
         </div>

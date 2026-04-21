@@ -152,7 +152,7 @@ export default function DashboardPage() {
     "";
 
   return (
-    <div className={`min-h-screen bg-gray-50 text-black ${urdu ? urduFont.className : ""}`}>
+    <div className={`min-h-screen bg-gray-50 text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       {/* Navigation */}
       <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-sm">
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">

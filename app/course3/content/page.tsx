@@ -6,6 +6,8 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/AuthContext";
 import QuizModal from "@/components/QuizModal";
 import ContentLoader from "@/components/ContentLoader";
+import { isUrdu } from "@/lib/uiLanguage";
+import { urduFont } from "@/lib/urduFont";
 
 type ContentState = {
   title: string | null;
@@ -30,6 +32,7 @@ function ContentView() {
   const semesterParam = searchParams.get("semester");
   const titleParam = searchParams.get("title");
   const topicParam = searchParams.get("topic");
+  const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
 
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
@@ -159,7 +162,7 @@ function ContentView() {
   if (!authLoading && !isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Redirecting to login...</p>
+        <p className="text-gray-500">{urdu ? "لاگ اِن کی طرف منتقل کیا جا رہا ہے..." : "Redirecting to login..."}</p>
       </div>
     );
   }
@@ -168,12 +171,12 @@ function ContentView() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 flex items-center justify-center">
         <div className="text-center p-8">
-          <p className="text-gray-500 mb-4">No subtopic selected.</p>
+          <p className="text-gray-500 mb-4">{urdu ? "کوئی سب ٹاپک منتخب نہیں کیا گیا۔" : "No subtopic selected."}</p>
           <button
             onClick={() => router.push("/course3/learn")}
             className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Back to Curriculum
+            {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
           </button>
         </div>
       </div>
@@ -181,7 +184,7 @@ function ContentView() {
   }
 
   if (state.loading) {
-    return <ContentLoader />;
+    return <ContentLoader urdu={urdu} />;
   }
 
   if (state.error || !state.content) {
@@ -196,7 +199,7 @@ function ContentView() {
             onClick={() => router.push("/course3/learn")}
             className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
-            Back to Curriculum
+            {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
           </button>
         </div>
       </div>
@@ -204,7 +207,7 @@ function ContentView() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -212,14 +215,14 @@ function ContentView() {
               <span className="text-white font-bold text-lg">T</span>
             </div>
             <p className="text-sm font-bold text-gray-900">
-              Course 3 · Content
+              {urdu ? "کورس 3 · مواد" : "Course 3 · Content"}
             </p>
           </div>
           <button
             onClick={() => router.push("/course3/learn")}
             className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Back to Curriculum
+            {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
           </button>
         </div>
       </nav>
@@ -288,6 +291,7 @@ function ContentView() {
           userEmail={user?.email}
           userId={(user?.userId as string) || undefined}
           semester={semesterParam || "1"}
+          urdu={urdu}
         />
       </main>
     </div>

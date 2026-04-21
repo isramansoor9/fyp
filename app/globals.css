@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.urdu-text {
+  direction: rtl;
+  text-align: right;
+  line-height: 2.1;
+}
+
+.urdu-text p,
+.urdu-text li,
+.urdu-text h1,
+.urdu-text h2,
+.urdu-text h3,
+.urdu-text h4,
+.urdu-text h5,
+.urdu-text h6,
+.urdu-text span,
+.urdu-text label,
+.urdu-text button {
+  line-height: 2.1;
+}

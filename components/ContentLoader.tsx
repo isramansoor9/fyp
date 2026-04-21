@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 const sparks = Array.from({ length: 6 });
 
-export default function ContentLoader() {
+export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white flex flex-col items-center justify-center relative overflow-hidden">
       {/* Background grid pattern */}
@@ -117,7 +117,7 @@ export default function ContentLoader() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          Preparing Your Lesson
+          {urdu ? "آپ کا سبق تیار کیا جا رہا ہے" : "Preparing Your Lesson"}
         </motion.h2>
 
         {/* Subtitle */}
@@ -127,7 +127,7 @@ export default function ContentLoader() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
         >
-          Personalizing content for your level...
+          {urdu ? "آپ کی سطح کے مطابق مواد ذاتی بنایا جا رہا ہے..." : "Personalizing content for your level..."}
         </motion.p>
 
         {/* Animated progress bar */}
@@ -154,7 +154,7 @@ export default function ContentLoader() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
         >
-          {["Circuits", "Diagnostics", "Safety"].map((label, i) => (
+          {(urdu ? ["سرکٹس", "تشخیص", "حفاظت"] : ["Circuits", "Diagnostics", "Safety"]).map((label, i) => (
             <motion.span
               key={label}
               className="text-[10px] font-semibold uppercase tracking-widest text-amber-700/70 bg-amber-100 border border-amber-200 px-3 py-1 rounded-full"

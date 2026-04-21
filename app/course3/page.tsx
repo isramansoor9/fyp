@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import EnrollModal from "@/components/EnrollModal";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
-import { urduFont } from "@/lib/urduFont";
 
 const COURSE_NAME = "Course 3";
 const COURSE_LEARN_PATH = "/course3/learn";
@@ -99,7 +98,7 @@ export default function Course3() {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 ${urdu ? urduFont.className : ""}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       {/* Navigation */}
       <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
