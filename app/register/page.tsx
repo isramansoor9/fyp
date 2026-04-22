@@ -88,8 +88,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={`min-h-screen bg-white text-black flex items-center justify-center px-6 py-12 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+    <div className={`min-h-screen bg-white text-black flex items-center justify-center px-4 py-10 sm:px-6 sm:py-12 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+      <div className="max-w-5xl w-full grid grid-cols-1 gap-6 items-center lg:grid-cols-2 lg:gap-10">
         <div
           className="hidden lg:block h-full rounded-3xl p-10 shadow-lg"
           style={{ backgroundColor: "#c3bebb" }}
@@ -107,7 +107,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-200 shadow-lg p-8">
+        <div className="bg-white rounded-3xl border border-gray-200 shadow-lg p-5 sm:p-6 lg:p-8">
           <div className="mb-6">
             <p className="text-sm uppercase tracking-wide font-semibold text-gray-500">
               {urdu ? "اکاؤنٹ بنائیں" : "Create Account"}
@@ -121,7 +121,7 @@ export default function RegisterPage() {
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">{urdu ? "انٹرفیس زبان" : "Interface Language"}</label>
-            <div className="flex items-center gap-6 rounded-xl border border-gray-200 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 px-4 py-3">
               <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                 <input type="radio" checked={!urdu} onChange={() => setUiLanguage("english")} />
                 English

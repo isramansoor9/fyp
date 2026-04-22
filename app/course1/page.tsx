@@ -92,26 +92,26 @@ export default function Course1() {
     <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       {/* Navigation */}
       <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">T</span>
             </div>
             <span className="text-xl font-bold">Teachus</span>
           </div>
-          <Link href="/dashboard" className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 inline-block">
+          <Link href="/dashboard" className="w-full sm:w-auto text-center px-4 py-2 sm:px-6 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 inline-block">
             {urdu ? "ڈیش بورڈ پر واپس جائیں" : "Back to Dashboard"}
           </Link>
         </div>
       </nav>
 
 {/* Hero Section */}
-      <section className="px-6 py-12 max-w-7xl mx-auto text-gray-600">
+      <section className="px-4 py-10 sm:px-6 sm:py-12 max-w-7xl mx-auto text-gray-600">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          <div className="grid lg:grid-cols-2 gap-8 p-8 lg:p-12">
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-8 lg:p-12">
             {/* Left Content */}
             <div>
-              <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-gray-900 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 text-gray-900 leading-tight">
                 Automotive Electrical <br/><span className="text-[#968e8a]">Foundations</span>
                 <span className="block text-gray-500 text-xl font-medium mt-2">{urdu ? "کورس 1 (3 ماہ کا انٹینسیو پروگرام)" : "Course 1 (3-Month Intensive)"}</span>
               </h1>
@@ -125,7 +125,7 @@ export default function Course1() {
               <button
                 onClick={handleStartCourse}
                 disabled={enrolling}
-                className="bg-black text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 flex items-center gap-2 group shadow-lg shadow-black/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-semibold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 group shadow-lg shadow-black/20 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isEnrolledInThis ? (urdu ? "سیکھنا جاری رکھیں" : "Continue Learning") : (urdu ? "کورس شروع کریں" : "Start Course")}
                 <Zap className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

@@ -46,7 +46,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-white text-black">
         {/* Nav */}
-        <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-sm">
+        <nav className="sticky top-0 z-50 flex items-center justify-between bg-white/95 px-4 py-4 shadow-sm backdrop-blur-sm sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
             <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
               <span className="text-white font-bold text-lg">T</span>
@@ -61,7 +61,7 @@ export default function DashboardPage() {
           </Link>
         </nav>
 
-        <div className="flex flex-col items-center justify-center px-8 py-32 text-center">
+        <div className="flex flex-col items-center justify-center px-4 py-20 text-center sm:px-6 sm:py-28">
           <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
             <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -71,7 +71,7 @@ export default function DashboardPage() {
           <p className="text-gray-500 mb-8 max-w-md">
             Please log in to access your personalized dashboard, track progress, and manage your courses.
           </p>
-          <div className="flex gap-4">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:gap-4">
             <Link
               href="/login"
               className="bg-black text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:bg-gray-800 hover:scale-105 hover:shadow-lg"
@@ -154,15 +154,16 @@ export default function DashboardPage() {
   return (
     <div className={`min-h-screen bg-gray-50 text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
       {/* Navigation */}
-      <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-sm">
+      <nav className="sticky top-0 z-50 bg-white/95 px-4 py-4 shadow-sm backdrop-blur-sm sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
           <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
             <span className="text-white font-bold text-lg">T</span>
           </div>
           <span className="text-lg font-bold text-black tracking-wide">Teachus</span>
         </Link>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
             <button
               onClick={() => handleLanguageSwitch("english")}
               disabled={updatingLanguage}
@@ -196,9 +197,10 @@ export default function DashboardPage() {
             {urdu ? "لاگ آؤٹ" : "Logout"}
           </button>
         </div>
+        </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-6xl mx-auto px-4 py-8 sm:px-6 sm:py-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10">
           <div className="w-24 h-24 bg-black rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg transition-transform duration-300 hover:scale-105">
