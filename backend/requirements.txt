@@ -7,4 +7,4 @@ google-genai>=1.0.0
 sentence-transformers>=3.0.0
 pinecone>=5.0.0
 elasticsearch>=8.0.0
-
+gunicorn
