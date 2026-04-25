@@ -349,7 +349,6 @@ def upsert_subtopic_status():
     "createdAt": now,
     "userId": resolved_user_id,
     "course": course,
-    "topic": topic,
     "subtopic": subtopic_name,
   }
 
@@ -553,6 +552,38 @@ def _run_quiz_judge(questions: list, user_answers: list) -> tuple[list, str | No
     fallback = _fallback_quiz_judge(items)
     return fallback, None
 
+def _append_reference_resource_section(content: str, resources: list[dict]) -> str:
+  """
+  Append a compact reference/resource box at the end of generated content.
+  The resources are selected via embedding similarity (cosine-style semantic retrieval).
+  """
+  base = (content or "").rstrip()
+  marker = "### Personalized Recommendation Resources"
+  if marker in base:
+    return base
+  if not resources:
+    one_liner = (
+      "References: You can refer to additional cosine-similarity matched resources in the recommendation panel."
+    )
+    return f"{base}\n\n{one_liner}".strip()
+
+  lines = [
+    "### Personalized Recommendation Resources",
+    "> These references are selected using cosine-similarity based semantic matching.",
+  ]
+  for i, item in enumerate(resources, start=1):
+    url = (item or {}).get("url", "").strip()
+    topic = (item or {}).get("topic", "").strip()
+    if not url:
+      continue
+    label = topic if topic else "Recommended resource"
+    lines.append(f"> {i}. {label}: {url}")
+
+  # Fall back to one line if no valid URLs made it through.
+  if len(lines) <= 2:
+    lines.append("> Refer to the recommended resources generated from cosine-similarity retrieval.")
+  return f"{base}\n\n" + "\n".join(lines)
+
 @app.route("/api/quiz/judge", methods=["POST"])
 def quiz_judge():
   """Standalone judge endpoint: body { items: [{ question, modelAnswer, userAnswer, difficulty, knowledgeDimension }] }."""
@@ -714,8 +745,9 @@ def personalize_content():
     print(f"[Personalize] HIT user_subtopics for {course} / {subtopic_name}")
     quiz = existing.get("quiz") if isinstance(existing.get("quiz"), dict) else {}
     recommended_resources = existing.get("recommendedResources") if isinstance(existing.get("recommendedResources"), list) else []
+    enriched_content = _append_reference_resource_section(existing.get("content"), recommended_resources)
     return jsonify({
-      "content": existing.get("content"),
+      "content": enriched_content,
       "quiz": quiz,
       "recommendedResources": recommended_resources,
       "studied": bool(existing.get("studied")),
@@ -770,8 +802,9 @@ def personalize_content():
       recommended_resources = recommend_resources_from_content(content, top_k=5)
     except Exception as rec_err:
       print(f"[RAG] Recommendation fallback due to error: {rec_err}")
+    content_with_resources = _append_reference_resource_section(content, recommended_resources)
 
-    print(f"[Personalize] MISS -> generated {len(content)} chars, storing in user_subtopics")
+    print(f"[Personalize] MISS -> generated {len(content_with_resources)} chars, storing in user_subtopics")
     now = datetime.utcnow()
     user_subtopics.update_one(
       {"userId": resolved_user_id, "course": course, "subtopic": subtopic_name},
@@ -780,7 +813,7 @@ def personalize_content():
           "topic": body.get("topic", "").strip(),
           "studied": bool((existing or {}).get("studied", False)),
           "contentGenerated": True,
-          "content": content,
+          "content": content_with_resources,
           "recommendedResources": recommended_resources,
           "lastViewedAt": now,
         },
@@ -793,7 +826,7 @@ def personalize_content():
     )
     users.update_one(user_query, {"$set": {"currentTopic": subtopic_name}})
     return jsonify({
-      "content": content,
+      "content": content_with_resources,
       "recommendedResources": recommended_resources,
       "cached": False,
       "contentGenerated": True
