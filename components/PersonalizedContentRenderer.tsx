@@ -208,55 +208,72 @@ export default function PersonalizedContentRenderer({ content }: Props) {
 
   return (
     <div className="content-body text-gray-700 leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h1,h2,h3]:mt-6 [&_h1,h2,h3]:mb-3 [&_p]:my-3 [&_ul]:my-4 [&_li]:ml-6 [&_li]:my-1 [&_strong]:font-semibold [&_strong]:text-gray-900">
-      <ReactMarkdown>{mainMarkdown}</ReactMarkdown>
-
       {flashcards.length > 0 && (
-        <section className="mt-10 pt-7 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900">Flashcards</h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Generate quick revision cards for this topic. Click a card to flip and reveal the explanation.
-              </p>
+        <section className="mb-10 rounded-2xl border border-gray-200 bg-white p-5 md:p-6 shadow-sm">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-4">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Flashcards</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Focused revision cards generated from this lesson. Open a card to review key points without losing your place.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700">
+                  {flashcards.length} cards
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowFlashcards((v) => !v)}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-black text-white text-sm font-semibold shadow-sm hover:bg-gray-800 transition-colors"
+                >
+                  {showFlashcards ? "Hide Flashcards" : "Show Flashcards"}
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowFlashcards((v) => !v)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-black text-white text-sm font-semibold shadow-sm hover:bg-gray-800 transition-colors"
-            >
-              {showFlashcards ? "Hide Flashcards" : "Generate Flashcards"}
-            </button>
           </div>
 
           {showFlashcards && (
             <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
               {flashcards.map((card, idx) => {
-                const flipped = !!flippedCards[idx];
+                const isFlipped = !!flippedCards[idx];
                 return (
                   <button
                     key={`${card.front}-${idx}`}
                     type="button"
                     onClick={() => toggleCard(idx)}
-                    className="text-left [perspective:1000px] h-52"
-                    aria-label={`Flashcard ${idx + 1}: ${card.front}`}
+                    className="group h-56 text-left [perspective:1200px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 rounded-xl"
+                    aria-label={`Flip flashcard ${idx + 1}: ${card.front}`}
                   >
                     <div
-                      className={`relative w-full h-full rounded-xl border border-gray-200 shadow-sm transition-transform duration-500 [transform-style:preserve-3d] ${flipped ? "[transform:rotateY(180deg)]" : ""}`}
+                      className={`relative h-full w-full rounded-xl border border-gray-200 shadow-sm transition-[transform,box-shadow,border-color] duration-300 [transform-style:preserve-3d] ${
+                        isFlipped ? "[transform:rotateY(180deg)]" : ""
+                      } group-hover:shadow-md group-hover:border-gray-300`}
                     >
                       <div className="absolute inset-0 rounded-xl bg-white p-5 [backface-visibility:hidden]">
-                        <span className="inline-flex px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 border border-gray-200">
-                          {card.tag}
-                        </span>
-                        <p className="mt-4 text-lg font-semibold text-gray-900 leading-snug">{card.front}</p>
-                        <p className="mt-5 text-xs text-gray-500">Click to flip</p>
-                      </div>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="inline-flex px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-700 border border-gray-200">
+                            {card.tag}
+                          </span>
+                          <span className="text-xs text-gray-400">{idx + 1}</span>
+                        </div>
+                        <div className="h-[calc(100%-2.5rem)] mt-4 flex items-center">
+                          <p className="text-base md:text-lg font-semibold text-gray-900 leading-snug">
+                            {card.front}
+                          </p>
+                        </div>
+                    </div>
 
-                      <div className="absolute inset-0 rounded-xl bg-gray-900 text-white p-5 [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                        <span className="inline-flex px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-white/15 text-gray-100 border border-white/20">
-                          Explanation
-                        </span>
-                        <p className="mt-4 text-sm leading-relaxed text-gray-100">{card.back}</p>
-                        <p className="mt-4 text-[11px] text-gray-300">Click to return</p>
+                      <div className="absolute inset-0 rounded-xl border border-gray-300 bg-gray-900 p-5 text-white [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="inline-flex px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide bg-white/10 text-gray-100 border border-white/20">
+                            Details
+                          </span>
+                          <span className="text-xs text-gray-300">{idx + 1}</span>
+                        </div>
+                        <div className="mt-4 h-[calc(100%-2.5rem)] overflow-y-auto pr-1">
+                          <p className="text-sm leading-relaxed text-gray-100 whitespace-pre-wrap">{card.back}</p>
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -266,6 +283,8 @@ export default function PersonalizedContentRenderer({ content }: Props) {
           )}
         </section>
       )}
+
+      <ReactMarkdown>{mainMarkdown}</ReactMarkdown>
 
       {resources.length > 0 && (
         <section className="mt-10 pt-7 border-t border-gray-200">
