@@ -569,19 +569,19 @@ def _append_reference_resource_section(content: str, resources: list[dict]) -> s
 
   lines = [
     "### Personalized Recommendation Resources",
-    "> These references are selected using cosine-similarity based semantic matching.",
+    "These resources are recommended based on your current lesson and learning gaps using cosine-similarity semantic matching.",
   ]
   for i, item in enumerate(resources, start=1):
     url = (item or {}).get("url", "").strip()
     topic = (item or {}).get("topic", "").strip()
     if not url:
       continue
-    label = topic if topic else "Recommended resource"
-    lines.append(f"> {i}. {label}: {url}")
+    label = topic if topic else f"Recommended Resource {i}"
+    lines.append(f"- [{label}]({url}) - A focused reference to strengthen this subtopic.")
 
   # Fall back to one line if no valid URLs made it through.
   if len(lines) <= 2:
-    lines.append("> Refer to the recommended resources generated from cosine-similarity retrieval.")
+    lines.append("You can refer to the recommendation panel for additional cosine-similarity matched resources.")
   return f"{base}\n\n" + "\n".join(lines)
 
 @app.route("/api/quiz/judge", methods=["POST"])

@@ -2,10 +2,10 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/AuthContext";
 import ContentLoader from "@/components/ContentLoader";
 import QuizModal from "@/components/QuizModal";
+import PersonalizedContentRenderer from "@/components/PersonalizedContentRenderer";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
 
@@ -222,9 +222,7 @@ function ContentView() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">
             {state.title}
           </h1>
-          <div className="content-body text-gray-700 leading-relaxed [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-semibold [&_h1,h2,h3]:mt-6 [&_h1,h2,h3]:mb-3 [&_p]:my-3 [&_ul]:my-4 [&_li]:ml-6 [&_li]:my-1 [&_strong]:font-semibold [&_strong]:text-gray-900">
-            <ReactMarkdown>{state.content}</ReactMarkdown>
-          </div>
+          <PersonalizedContentRenderer content={state.content} />
           {!quizCompleted && (
             <div className="mt-10 pt-8 border-t border-gray-100">
               <button
