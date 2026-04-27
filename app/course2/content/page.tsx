@@ -87,7 +87,9 @@ function ContentView() {
           }
         }
 
-        const res = await fetch(`/api/course2/content?title=${encodeURIComponent(titleParam)}`);
+        const res = await fetch(
+          `/api/course2/content?title=${encodeURIComponent(titleParam)}&level=${encodeURIComponent(userLevel)}`
+        );
         if (!res.ok) throw new Error("Content not found");
         const data: { title: string; content: string } = await res.json();
         let finalContent = data.content;

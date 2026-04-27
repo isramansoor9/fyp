@@ -5,6 +5,26 @@ import { join } from "path";
 const PLACEHOLDER =
   "Content for this topic is being prepared. Check back soon for detailed learning material.";
 
+const CONTENT_FILES_BY_LEVEL: Record<string, (semester: string) => string[]> = {
+  easy: (semester) => [`finetuned_easycontent8bCourse3-${semester}.json`],
+  intermediate: (semester) => [
+    `finetuned_intermediatecontent8bCourse3-${semester}.json`,
+    `intermediatecontent_baseCourse3-${semester}.json`,
+    `finetuned_easycontent8bCourse3-${semester}.json`,
+  ],
+  advanced: (semester) => [
+    `finetuned_hardcontent8bCourse3-${semester}.json`,
+    `hardcontent_baseCourse3-${semester}.json`,
+    `finetuned_easycontent8bCourse3-${semester}.json`,
+  ],
+};
+
+function normalizeLevel(level: string | null): string {
+  const lv = (level || "").toLowerCase();
+  if (lv === "hard") return "advanced";
+  return CONTENT_FILES_BY_LEVEL[lv] ? lv : "easy";
+}
+
 /** Normalize "(Theory + Practical)" variants for matching (with/without space before paren). */
 function normalizeTheoryPractical(s: string): string {
   return s
@@ -38,6 +58,7 @@ function getContent(
 export async function GET(request: NextRequest) {
   const semester = request.nextUrl.searchParams.get("semester");
   const title = request.nextUrl.searchParams.get("title");
+  const level = normalizeLevel(request.nextUrl.searchParams.get("level"));
 
   if (!semester || (semester !== "1" && semester !== "2")) {
     return NextResponse.json(
@@ -53,23 +74,18 @@ export async function GET(request: NextRequest) {
   }
 
   const folder = semester === "1" ? "Course3-1" : "Course3-2";
-  const filePath = join(
-    process.cwd(),
-    "content3",
-    folder,
-    "finetuned_easycontent8bCourse3-" + semester + ".json"
-  );
 
   try {
     const decoded = decodeURIComponent(title);
+    const fileCandidates = (CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy)(semester);
 
-    if (existsSync(filePath)) {
-      const contentMap: Record<string, string> = JSON.parse(
-        readFileSync(filePath, "utf-8")
-      );
+    for (const fileName of fileCandidates) {
+      const filePath = join(process.cwd(), "content3", folder, fileName);
+      if (!existsSync(filePath)) continue;
+      const contentMap: Record<string, string> = JSON.parse(readFileSync(filePath, "utf-8"));
       const content = getContent(contentMap, decoded);
       if (content) {
-        return NextResponse.json({ title: decoded, content });
+        return NextResponse.json({ title: decoded, content, levelUsed: level, sourceFile: fileName });
       }
     }
 

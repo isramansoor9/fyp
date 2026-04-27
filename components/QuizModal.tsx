@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, ChevronRight, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 type QuizQuestion = { question: string; answer: string; difficulty: string };
 
@@ -31,6 +32,7 @@ export default function QuizModal({
   semester = "1",
   urdu = false,
 }: QuizModalProps) {
+  const { user, setUser } = useAuth();
   const [step, setStep] = useState<"prompt" | "quiz" | "submitting" | "done">("prompt");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -96,6 +98,13 @@ export default function QuizModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || (urdu ? "کوئز جمع نہیں ہو سکا" : "Failed to submit"));
+      if (user && (typeof data.personalizationScore === "number" || typeof data.level === "string")) {
+        setUser({
+          ...user,
+          ...(typeof data.personalizationScore === "number" ? { personalizationScore: data.personalizationScore } : {}),
+          ...(typeof data.level === "string" ? { level: data.level } : {}),
+        });
+      }
       setStep("done");
       if (onCompleted) {
         onCompleted({

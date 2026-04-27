@@ -31,7 +31,13 @@ type User = {
 export default function DashboardPage() {
   const { user, setUser, isLoading: loading, logout } = useAuth();
   const userTyped = user as User | null;
-  const [summary, setSummary] = useState<{ quizzesAttempted: number; studiedSubtopics: { title: string }[] } | null>(null);
+  const [summary, setSummary] = useState<{
+    quizzesAttempted: number;
+    studiedSubtopics: { title: string }[];
+    averageQuizScore: number;
+    personalizationScore: number;
+    level: string;
+  } | null>(null);
   const [updatingLanguage, setUpdatingLanguage] = useState(false);
 
   if (loading) {
@@ -139,6 +145,9 @@ export default function DashboardPage() {
         setSummary({
           quizzesAttempted: d.quizzesAttempted || 0,
           studiedSubtopics: d.studiedSubtopics || [],
+          averageQuizScore: typeof d.averageQuizScore === "number" ? d.averageQuizScore : 0,
+          personalizationScore: typeof d.personalizationScore === "number" ? d.personalizationScore : (userTyped?.personalizationScore ?? 40),
+          level: typeof d.level === "string" ? d.level : (userTyped?.level || "easy"),
         });
       })
       .catch(() => {});
@@ -251,7 +260,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-2xl font-bold">0%</p>
+                <p className="text-2xl font-bold">{Math.round((summary?.averageQuizScore ?? 0) * 10)}%</p>
                 <p className="text-sm text-gray-500">{urdu ? "پیش رفت" : "Progress"}</p>
               </div>
             </div>
@@ -376,11 +385,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-500 text-sm">{urdu ? "لیول" : "Level"}</span>
-                  <span className="text-sm font-medium capitalize">{userTyped.level || "easy"}</span>
+                  <span className="text-sm font-medium capitalize">{summary?.level || userTyped.level || "easy"}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-500 text-sm">{urdu ? "پرسنلائزیشن اسکور" : "Personalization Score"}</span>
-                  <span className="text-sm font-medium">{userTyped.personalizationScore ?? 40}</span>
+                  <span className="text-sm font-medium">{summary?.personalizationScore ?? userTyped.personalizationScore ?? 40}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-500 text-sm">{urdu ? "آخری پڑھے گئے سب ٹاپک" : "Last Subtopic Studied"}</span>

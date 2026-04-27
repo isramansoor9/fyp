@@ -109,7 +109,9 @@ function ContentView() {
         }
 
         // 2) Slow path: load base content and personalize/store
-        const contentRes = await fetch(`/api/course1/content?title=${encodeURIComponent(titleParam)}`);
+        const contentRes = await fetch(
+          `/api/course1/content?title=${encodeURIComponent(titleParam)}&level=${encodeURIComponent(userLevel)}`
+        );
         if (!contentRes.ok) {
           const d = await contentRes.json().catch(() => ({}));
           throw new Error((d as { error?: string }).error || "Content not found");

@@ -96,6 +96,7 @@ function ContentView() {
         const params = new URLSearchParams({
           semester: semesterParam,
           title: titleParam,
+          level: userLevel,
         });
         const res = await fetch(`/api/course3/content?${params}`);
         if (!res.ok) throw new Error("Content not found");

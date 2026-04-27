@@ -6,10 +6,10 @@ type QAPair = { Question: string; Answer: string; Difficulty: string; KnowledgeD
 type QASource = { url?: string; transcript?: string; qa_pairs: QAPair[] };
 type QAMap = Record<string, QASource[]>;
 
-const LEVEL_MAP: Record<string, { primary: string[]; secondary: string[] }> = {
-  easy: { primary: ["Easy"], secondary: ["Intermediate"] },
-  intermediate: { primary: ["Intermediate"], secondary: ["Hard"] },
-  advanced: { primary: ["Hard"], secondary: ["Intermediate"] },
+const LEVEL_QUIZ_MIX: Record<string, Record<string, number>> = {
+  easy: { Easy: 4, Intermediate: 1 },
+  intermediate: { Easy: 1, Intermediate: 3, Hard: 1 },
+  advanced: { Easy: 1, Intermediate: 1, Hard: 3 },
 };
 
 function findBestTopicKey(keys: string[], subtopic: string): string | null {
@@ -35,6 +35,12 @@ function shuffle<T>(arr: T[]): T[] {
   return out;
 }
 
+function normalizedLevel(level: string): string {
+  const lv = (level || "").toLowerCase();
+  if (lv === "hard") return "advanced";
+  return LEVEL_QUIZ_MIX[lv] ? lv : "easy";
+}
+
 export async function GET(request: NextRequest) {
   const title = request.nextUrl.searchParams.get("title");
   const level = request.nextUrl.searchParams.get("level") || "easy";
@@ -45,9 +51,7 @@ export async function GET(request: NextRequest) {
   }
 
   const decoded = decodeURIComponent(title);
-  const levels = LEVEL_MAP[level] || LEVEL_MAP.easy;
-  const primaryCount = 3;
-  const secondaryCount = 2;
+  const levelMix = LEVEL_QUIZ_MIX[normalizedLevel(level)];
 
   const folder = semester === "2" ? "Course3-2" : "Course3-1";
   const fileName = semester === "2" ? "Course3-2QAs.json" : "Course3-1QAs.json";
@@ -78,12 +82,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const primary = shuffle(allPairs.filter((q) => levels.primary.includes(q.Difficulty)));
-    const secondary = shuffle(allPairs.filter((q) => levels.secondary.includes(q.Difficulty)));
-    const selected = [
-      ...primary.slice(0, primaryCount),
-      ...secondary.slice(0, secondaryCount),
-    ];
+    const selected: QAPair[] = [];
+    Object.entries(levelMix).forEach(([difficulty, count]) => {
+      const bucket = shuffle(allPairs.filter((q) => q.Difficulty === difficulty));
+      selected.push(...bucket.slice(0, count));
+    });
     const needMore = 5 - selected.length;
     if (needMore > 0) {
       const remaining = shuffle(allPairs.filter((q) => !selected.includes(q)));

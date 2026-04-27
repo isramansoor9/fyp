@@ -465,9 +465,20 @@ def dashboard_summary():
     if d.get("studied")
   ]
   quizzes_attempted = sum(1 for d in docs if isinstance(d.get("quiz"), dict) and d.get("quiz"))
+  quiz_scores = [
+    float((d.get("quiz") or {}).get("score"))
+    for d in docs
+    if isinstance(d.get("quiz"), dict) and isinstance((d.get("quiz") or {}).get("score"), (int, float))
+  ]
+  average_score = round(sum(quiz_scores) / len(quiz_scores), 2) if quiz_scores else 0.0
+  recent_scores = quiz_scores[-5:]
   return jsonify({
     "quizzesAttempted": quizzes_attempted,
     "studiedSubtopics": studied,
+    "averageQuizScore": average_score,
+    "recentQuizScores": recent_scores,
+    "personalizationScore": float(user.get("personalizationScore", 40)),
+    "level": _normalize_level(user.get("level")),
   }), 200
 
 def _fallback_quiz_judge(items: list[dict]) -> list[dict]:
@@ -552,6 +563,46 @@ def _run_quiz_judge(questions: list, user_answers: list) -> tuple[list, str | No
     fallback = _fallback_quiz_judge(items)
     return fallback, None
 
+def _normalize_level(level: str | None) -> str:
+  lv = (level or "").strip().lower()
+  if lv == "hard":
+    return "advanced"
+  if lv in {"easy", "intermediate", "advanced"}:
+    return lv
+  return "easy"
+
+def _target_level_for_score(personalization_score: float) -> str:
+  if personalization_score > 65:
+    return "advanced"
+  if personalization_score > 40:
+    return "intermediate"
+  return "easy"
+
+def _score_delta_from_quiz_percent(quiz_percent: float) -> int:
+  """
+  >50 increases, <50 decreases, 50 stays stable.
+  Delta is clamped to prevent one-quiz jumps.
+  """
+  raw = (quiz_percent - 50.0) / 10.0
+  return max(-5, min(5, round(raw)))
+
+def _next_level_with_stability(current_level: str, target_level: str, recent_targets: list[str]) -> tuple[str, list[str], bool]:
+  """
+  Apply 2-of-last-3 consistency before changing level.
+  """
+  normalized_targets = [_normalize_level(x) for x in recent_targets if isinstance(x, str)]
+  normalized_targets.append(_normalize_level(target_level))
+  normalized_targets = normalized_targets[-3:]
+
+  counts = {
+    "easy": normalized_targets.count("easy"),
+    "intermediate": normalized_targets.count("intermediate"),
+    "advanced": normalized_targets.count("advanced"),
+  }
+  strongest = max(counts, key=counts.get)
+  should_change = counts[strongest] >= 2 and strongest != current_level
+  return (strongest if should_change else current_level), normalized_targets, should_change
+
 def _append_reference_resource_section(content: str, resources: list[dict]) -> str:
   """
   Append a compact reference/resource box at the end of generated content.
@@ -628,6 +679,20 @@ def quiz_submit():
 
   judge_results, level_context = _run_quiz_judge(questions, user_answers)
   score = round(sum(int(r.get("marks", 0)) for r in judge_results) / max(len(judge_results), 1), 2)
+  quiz_percent = round(score * 10.0, 2)
+
+  current_personalization = float(user.get("personalizationScore", 40))
+  delta = _score_delta_from_quiz_percent(quiz_percent)
+  updated_personalization = max(20.0, min(100.0, round(current_personalization + delta, 2)))
+
+  current_level = _normalize_level(user.get("level"))
+  target_level = _target_level_for_score(updated_personalization)
+  recent_level_targets = user.get("recentLevelTargets") if isinstance(user.get("recentLevelTargets"), list) else []
+  next_level, rolled_targets, level_changed = _next_level_with_stability(
+    current_level=current_level,
+    target_level=target_level,
+    recent_targets=recent_level_targets,
+  )
   # Single source of truth: persist quiz in user_subtopics
   resolved_user_id = user.get("userId") or user.get("email")
   quiz_payload = {
@@ -669,6 +734,9 @@ def quiz_submit():
         "lastTopicRecap": recap_one_line[:300],
         "lastSubTopicStudied": subtopic_name,
         "currentTopic": subtopic_name,
+        "personalizationScore": updated_personalization,
+        "level": next_level,
+        "recentLevelTargets": rolled_targets,
       },
     },
   )
@@ -677,6 +745,11 @@ def quiz_submit():
     "message": "Quiz submitted successfully.",
     "judgeResults": judge_results,
     "score": score,
+    "quizPercent": quiz_percent,
+    "scoreDelta": delta,
+    "personalizationScore": updated_personalization,
+    "level": next_level,
+    "levelChanged": level_changed,
   }), 201
 
 @app.route("/api/quiz/status", methods=["POST"])

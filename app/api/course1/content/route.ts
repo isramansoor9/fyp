@@ -5,6 +5,18 @@ import { join } from "path";
 const PLACEHOLDER =
   "Content for this topic is being prepared. Check back soon for detailed learning material.";
 
+const CONTENT_FILES_BY_LEVEL: Record<string, string[]> = {
+  easy: ["finetuned_easycontent8bCourse1.json"],
+  intermediate: ["finetuned_intermediatecontent8bCourse1.json", "intermediatecontent_baseCourse1.json", "finetuned_easycontent8bCourse1.json"],
+  advanced: ["finetuned_hardcontent8bCourse1.json", "hardcontent_baseCourse1.json", "finetuned_easycontent8bCourse1.json"],
+};
+
+function normalizeLevel(level: string | null): string {
+  const lv = (level || "").toLowerCase();
+  if (lv === "hard") return "advanced";
+  return CONTENT_FILES_BY_LEVEL[lv] ? lv : "easy";
+}
+
 function getContentForTitle(
   contentMap: Record<string, string>,
   title: string
@@ -26,6 +38,7 @@ function getContentForTitle(
 
 export async function GET(request: NextRequest) {
   const title = request.nextUrl.searchParams.get("title");
+  const level = normalizeLevel(request.nextUrl.searchParams.get("level"));
   if (!title) {
     return NextResponse.json(
       { error: "Missing title parameter" },
@@ -34,20 +47,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const filePath = join(
-      process.cwd(),
-      "content1",
-      "finetuned_easycontent8bCourse1.json"
-    );
     const decoded = decodeURIComponent(title);
+    const fileCandidates = CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy;
 
-    if (existsSync(filePath)) {
+    for (const fileName of fileCandidates) {
+      const filePath = join(process.cwd(), "content1", fileName);
+      if (!existsSync(filePath)) continue;
       const fileContent = readFileSync(filePath, "utf-8");
       const contentMap: Record<string, string> = JSON.parse(fileContent);
       const content = getContentForTitle(contentMap, decoded);
-
       if (content) {
-        return NextResponse.json({ title: decoded, content });
+        return NextResponse.json({ title: decoded, content, levelUsed: level, sourceFile: fileName });
       }
     }
 
