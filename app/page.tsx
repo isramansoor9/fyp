@@ -9,8 +9,8 @@ import { urduFont } from "@/lib/urduFont";
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { user, isLoggedIn } = useAuth();
-  const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage) || !isLoggedIn;
+  const { user, isLoggedIn, isLoading } = useAuth();
+  const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
 
   const faqs = [
     {
@@ -61,7 +61,7 @@ export default function Home() {
           </div>
         </div>
 
-        {isLoggedIn && user ? (
+        {!isLoading && isLoggedIn && user ? (
           <Link
             href="/dashboard"
             className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
@@ -71,13 +71,15 @@ export default function Home() {
             </span>
             <span className="max-w-[120px] truncate">{getDisplayName(user)}</span>
           </Link>
-        ) : (
+        ) : !isLoading ? (
           <Link
             href="/login"
             className="bg-black text-white px-6 py-2 rounded text-sm font-medium transition-all duration-300 hover:bg-gray-800 transform hover:scale-105 hover:shadow-lg"
           >
             {urdu ? "لاگ اِن" : "Login"}
           </Link>
+        ) : (
+          <div className="h-10 w-24 rounded bg-gray-100 animate-pulse" aria-hidden="true" />
         )}
       </nav>
 
@@ -94,7 +96,7 @@ export default function Home() {
               ? "پرسنلائزڈ اور کثیر لسانی تربیت جو جدید ریکمینڈیشن انٹیلیجنس سے چلتی ہے تاکہ مہارتیں بہتر ہوں، روزگار کے مواقع بڑھیں اور نوجوان بااختیار بنیں۔"
               : "Personalized, multilingual training powered by Recommendation Intelligence to enhance skills, boost employability, and drive youth empowerment."}
           </p>
-          {!isLoggedIn && (
+          {!isLoading && !isLoggedIn && (
             <Link
               href="/register"
               className="inline-block bg-black text-white px-8 py-3 rounded font-medium transition-all duration-300 hover:bg-gray-800 transform hover:scale-105 hover:shadow-xl"
@@ -394,7 +396,7 @@ export default function Home() {
               ? "ہزاروں سیکھنے والوں میں شامل ہوں جو Teachus کے ساتھ مطلوبہ ووکیشنل مہارتیں سیکھ رہے ہیں۔"
               : "Join thousands of learners building in-demand vocational skills with Teachus."}
           </p>
-          {!isLoggedIn && (
+          {!isLoading && !isLoggedIn && (
             <Link
               href="/register"
               className="inline-block bg-white text-black px-10 py-3 rounded font-semibold transition-all duration-300 hover:bg-gray-100 transform hover:scale-105 hover:shadow-xl"

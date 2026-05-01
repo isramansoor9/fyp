@@ -16,6 +16,14 @@ load_dotenv()
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 if not gemini_api_key:
     print("[WARNING] GEMINI_API_KEY is not set – personalization and quiz judge will be unavailable.")
+GEMINI_AVAILABLE = bool(gemini_api_key)
+
+def _mark_gemini_unavailable(err: Exception) -> None:
+  text = str(err or "").lower()
+  if "permission_denied" in text or "api key was reported as leaked" in text or "403" in text:
+    # Keep Gemini enabled for subsequent requests; fallback is per-request.
+    # This avoids sticky "disabled" mode and always gives Gemini another chance.
+    print("[Gemini] Permission/auth error encountered; using per-request fallback.")
 
 app = Flask(__name__)
 
@@ -535,8 +543,6 @@ def _fallback_quiz_judge(items: list[dict]) -> list[dict]:
 
 def _run_quiz_judge(questions: list, user_answers: list) -> tuple[list, str | None]:
   """Call Gemini to judge each QA; return (results, level_context)."""
-  from gemini_service import judge_quiz, builder_fix_judge_format
-
   if not questions or len(user_answers) != len(questions):
     print("[Judge] Skipped: question/answer count mismatch or empty.")
     return [], None
@@ -551,14 +557,26 @@ def _run_quiz_judge(questions: list, user_answers: list) -> tuple[list, str | No
       "knowledgeDimension": q.get("knowledgeDimension") or q.get("KnowledgeDimension", "Factual"),
     })
 
+  if not GEMINI_AVAILABLE:
+    print("[Judge] Gemini unavailable (missing key), using local fallback judge.")
+    return _fallback_quiz_judge(items), None
+
   try:
-    results, level_context = judge_quiz(items)
+    from gemini_service import judge_quiz, builder_fix_judge_format
+    with ThreadPoolExecutor(max_workers=1) as executor:
+      future = executor.submit(judge_quiz, items)
+      try:
+        results, level_context = future.result(timeout=90)
+      except FuturesTimeoutError:
+        print("[Judge] Gemini timed out after 60s; using local fallback judge.")
+        return _fallback_quiz_judge(items), None
     if len(results) != len(items) or not all(isinstance(r.get("marks"), (int, float)) for r in results):
       print(f"[Judge] Malformed output ({len(results)} vs {len(items)}), running builder fix...")
       results = builder_fix_judge_format(str(results), len(items))
     print(f"[Judge] Success: {len(results)} results, levelContext={level_context}")
     return results, level_context
   except Exception as e:
+    _mark_gemini_unavailable(e)
     print(f"[Judge] ERROR (falling back to local grading): {e}")
     traceback.print_exc()
     fallback = _fallback_quiz_judge(items)
@@ -723,16 +741,69 @@ def quiz_judge():
   items = body.get("items", [])
   if not items:
     return jsonify({"error": "items array required."}), 400
-  from gemini_service import judge_quiz, builder_fix_judge_format
+  if not GEMINI_AVAILABLE:
+    normalized_items = []
+    for item in items:
+      normalized_items.append({
+        "question": item.get("question") or "",
+        "modelAnswer": item.get("modelAnswer") or "",
+        "userAnswer": item.get("userAnswer") or "",
+        "difficulty": item.get("difficulty") or "Easy",
+        "knowledgeDimension": item.get("knowledgeDimension") or "Factual",
+      })
+    return jsonify({
+      "results": _fallback_quiz_judge(normalized_items),
+      "levelContext": None,
+      "judgeFallback": True,
+      "message": "Gemini unavailable (missing key); used local judge fallback."
+    }), 200
+
   try:
-    results, level_context = judge_quiz(items)
+    from gemini_service import judge_quiz, builder_fix_judge_format
+    with ThreadPoolExecutor(max_workers=1) as executor:
+      future = executor.submit(judge_quiz, items)
+      try:
+        results, level_context = future.result(timeout=60)
+      except FuturesTimeoutError:
+        normalized_items = []
+        for item in items:
+          normalized_items.append({
+            "question": item.get("question") or "",
+            "modelAnswer": item.get("modelAnswer") or "",
+            "userAnswer": item.get("userAnswer") or "",
+            "difficulty": item.get("difficulty") or "Easy",
+            "knowledgeDimension": item.get("knowledgeDimension") or "Factual",
+          })
+        return jsonify({
+          "results": _fallback_quiz_judge(normalized_items),
+          "levelContext": None,
+          "judgeFallback": True,
+          "message": "Gemini timed out after 60 seconds; used local judge fallback."
+        }), 200
     if len(results) != len(items):
       results = builder_fix_judge_format(str(results), len(items))
     return jsonify({"results": results, "levelContext": level_context}), 200
   except Exception as e:
-    print(f"[Judge Endpoint] ERROR: {e}")
+    _mark_gemini_unavailable(e)
+    # Graceful fallback for Gemini outages / leaked key / rate limits.
+    print(f"[Judge Endpoint] ERROR (using local fallback): {e}")
     traceback.print_exc()
-    return jsonify({"error": "Judge failed.", "detail": str(e)}), 500
+    normalized_items = []
+    for item in items:
+      normalized_items.append({
+        "question": item.get("question") or "",
+        "modelAnswer": item.get("modelAnswer") or "",
+        "userAnswer": item.get("userAnswer") or "",
+        "difficulty": item.get("difficulty") or "Easy",
+        "knowledgeDimension": item.get("knowledgeDimension") or "Factual",
+      })
+    fallback_results = _fallback_quiz_judge(normalized_items)
+    return jsonify({
+      "results": fallback_results,
+      "levelContext": None,
+      "judgeFallback": True,
+      "message": "Gemini unavailable; used local judge fallback."
+    }), 200
 
 @app.route("/api/quiz/submit", methods=["POST"])
 def quiz_submit():
@@ -940,7 +1011,9 @@ def personalize_content():
   except Exception as prev_quiz_err:
     print(f"[Personalize] Previous quiz context enrichment skipped: {prev_quiz_err}")
 
-  from gemini_service import personalize_content as gemini_personalize
+  gemini_personalize = None
+  if GEMINI_AVAILABLE:
+    from gemini_service import personalize_content as gemini_personalize
   try:
     # RAG: query enhancement + hybrid retrieve + rerank
     enhanced_query = subtopic_name
@@ -965,23 +1038,27 @@ def personalize_content():
         + rag_context
       )
 
-    # Let Gemini run with a generous timeout (2 minutes). If it exceeds this,
+    # Wait up to 60s for Gemini. If it exceeds this,
     # we fall back to local personalization and still compute recommendations.
-    with ThreadPoolExecutor(max_workers=1) as executor:
-      future = executor.submit(
-        gemini_personalize,
-        topic_name=subtopic_name,
-        base_content=augmented_base,
-        quiz_qas=quiz_qas,
-        user_level=user_level,
-        previous_quiz_feedback=previous_quiz_feedback or None,
-        last_topic_recap=last_topic_recap or None,
-      )
-      try:
-        content = future.result(timeout=120)
-      except FuturesTimeoutError:
-        content = ""
-        print("[Personalize] Gemini timed out after 120s; switching to fallback personalization.")
+    if (not GEMINI_AVAILABLE) or gemini_personalize is None:
+      content = ""
+      print("[Personalize] Gemini unavailable (missing key), using local personalization fallback.")
+    else:
+      with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(
+          gemini_personalize,
+          topic_name=subtopic_name,
+          base_content=augmented_base,
+          quiz_qas=quiz_qas,
+          user_level=user_level,
+          previous_quiz_feedback=previous_quiz_feedback or None,
+          last_topic_recap=last_topic_recap or None,
+        )
+        try:
+          content = future.result(timeout=60)
+        except FuturesTimeoutError:
+          content = ""
+          print("[Personalize] Gemini timed out after 60s; switching to fallback personalization.")
     if not isinstance(content, str) or not content.strip() or content.strip() == augmented_base.strip():
       content = _local_personalize_content(
         topic_name=subtopic_name,
@@ -1034,6 +1111,7 @@ def personalize_content():
       "contentGenerated": True
     }), 200
   except Exception as e:
+    _mark_gemini_unavailable(e)
     print(f"[Personalize] ERROR: {e}")
     traceback.print_exc()
     # Graceful fallback: return base content instead of failing request.

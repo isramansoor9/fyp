@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const STORAGE_KEY = "teachus_user";
 const AUTH_SYNC_EVENT = "teachus:auth-sync";
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 function readStoredUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
@@ -49,7 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserState(readStoredUser());
   }, []);
 
-  useEffect(() => {
+  // Hydrate auth state before paint on client to avoid logged-out flicker on navigation.
+  useIsomorphicLayoutEffect(() => {
     syncFromStorage();
     setIsLoading(false);
   }, [syncFromStorage]);

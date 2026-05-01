@@ -21,6 +21,10 @@ interface TocData {
   theoryTopics: TopicGroup[];
 }
 
+function normalizeProgressKey(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 /**
  * Course 2 TOC per course2.pdf: Theory first, then Practical.
  * Subtopics match PDF wording for content lookup.
@@ -272,13 +276,17 @@ export default function Course2LearnPage() {
   const { user } = useAuth();
   const [completedContentSet, setCompletedContentSet] = useState<Set<string>>(new Set());
   const flatSubtopics = useMemo(() => buildFlatList(toc), []);
-  const lastCompletedIndex = useMemo(() => {
-    const studiedIndices = flatSubtopics
-      .filter((f) => completedContentSet.has(f.title))
-      .map((f) => f.globalIndex);
-    return studiedIndices.length ? Math.max(...studiedIndices) : -1;
+  const maxUnlockedIndex = useMemo(() => {
+    let contiguousCompleted = 0;
+    for (const item of flatSubtopics) {
+      if (completedContentSet.has(normalizeProgressKey(item.title))) {
+        contiguousCompleted += 1;
+        continue;
+      }
+      break;
+    }
+    return contiguousCompleted; // immediate next topic after contiguous completed block
   }, [flatSubtopics, completedContentSet]);
-  const maxUnlockedIndex = lastCompletedIndex + 1;
 
   useEffect(() => {
     const u = user as { userId?: string; email?: string } | null;
@@ -313,10 +321,10 @@ export default function Course2LearnPage() {
         }),
       })
         .then((r) => (r.ok ? r.json() : Promise.resolve({ subtopics: {} })))
-        .then((d: { subtopics?: Record<string, { hasContent?: boolean }> }) => {
+        .then((d: { subtopics?: Record<string, { hasContent?: boolean; studied?: boolean }> }) => {
           const completed = Object.entries(d.subtopics || {})
-            .filter(([, meta]) => Boolean(meta?.hasContent))
-            .map(([subtopic]) => subtopic);
+            .filter(([, meta]) => Boolean(meta?.hasContent) || Boolean(meta?.studied))
+            .map(([subtopic]) => normalizeProgressKey(subtopic));
           setCompletedContentSet(new Set(completed));
         })
         .catch(() => {});
@@ -371,7 +379,7 @@ export default function Course2LearnPage() {
       );
       if (!flat) return null;
       const label = section === "practical" ? `P${topic.id}.${index + 1}` : `${topic.id}.${index + 1}`;
-      const isStudied = completedContentSet.has(sub.title);
+      const isStudied = completedContentSet.has(normalizeProgressKey(sub.title));
       const isLocked = !isStudied && flat.globalIndex > maxUnlockedIndex;
       return (
         <li key={sub.id}>

@@ -28,6 +28,10 @@ interface FlatSubtopic extends Subtopic {
   section: "theory" | "practical";
 }
 
+function normalizeProgressKey(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 function buildFlatList(data: TocData): FlatSubtopic[] {
   const list: FlatSubtopic[] = [];
   let index = 0;
@@ -70,14 +74,17 @@ export default function Course1LearnPage() {
     [toc]
   );
 
-  const lastCompletedIndex = useMemo(() => {
-    const studiedIndices = flatSubtopics
-      .filter((f) => completedContentSet.has(f.title))
-      .map((f) => f.globalIndex);
-    return studiedIndices.length ? Math.max(...studiedIndices) : -1;
+  const maxUnlockedIndex = useMemo(() => {
+    let contiguousCompleted = 0;
+    for (const item of flatSubtopics) {
+      if (completedContentSet.has(normalizeProgressKey(item.title))) {
+        contiguousCompleted += 1;
+        continue;
+      }
+      break;
+    }
+    return contiguousCompleted; // immediate next topic after contiguous completed block
   }, [flatSubtopics, completedContentSet]);
-
-  const maxUnlockedIndex = lastCompletedIndex + 1;
 
   const [openTheoryTopics, setOpenTheoryTopics] = useState<
     Record<string, boolean>
@@ -140,10 +147,10 @@ export default function Course1LearnPage() {
         }),
       })
         .then((r) => (r.ok ? r.json() : Promise.resolve({ subtopics: {} })))
-        .then((d: { subtopics?: Record<string, { hasContent?: boolean }> }) => {
+        .then((d: { subtopics?: Record<string, { hasContent?: boolean; studied?: boolean }> }) => {
           const completed = Object.entries(d.subtopics || {})
-            .filter(([, meta]) => Boolean(meta?.hasContent))
-            .map(([subtopic]) => subtopic);
+            .filter(([, meta]) => Boolean(meta?.hasContent) || Boolean(meta?.studied))
+            .map(([subtopic]) => normalizeProgressKey(subtopic));
           setCompletedContentSet(new Set(completed));
         })
         .catch(() => {});
@@ -189,7 +196,7 @@ export default function Course1LearnPage() {
       );
       if (!flat) return null;
       const label = section === "theory" ? `T${topic.id}.${index + 1}` : `P${topic.id}.${index + 1}`;
-      const isStudied = completedContentSet.has(sub.title);
+      const isStudied = completedContentSet.has(normalizeProgressKey(sub.title));
       const isLocked = !isStudied && flat.globalIndex > maxUnlockedIndex;
 
       return (

@@ -10,6 +10,11 @@ const CONTENT_FILES_BY_LEVEL: Record<string, string[]> = {
   intermediate: ["IntermediateContentCourse1.json", "EasyContentCourse1.json"],
   advanced: ["AdvancedContentCourse1.json", "EasyContentCourse1.json"],
 };
+const ALL_CONTENT_FILES = [
+  "EasyContentCourse1.json",
+  "IntermediateContentCourse1.json",
+  "AdvancedContentCourse1.json",
+];
 
 function normalizeLevel(level: string | null): string {
   const lv = (level || "").toLowerCase();
@@ -36,6 +41,27 @@ function getContentForTitle(
   return null;
 }
 
+function normalizeLoose(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\(theory\s*\+\s*practical\)/gi, "")
+    .replace(/\(practical\)/gi, "")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim();
+}
+
+function findBestContentKey(keys: string[], requestedTitle: string): string | null {
+  const exactNorm = normalizeLoose(requestedTitle);
+  const exact = keys.find((k) => normalizeLoose(k) === exactNorm);
+  if (exact) return exact;
+  const contains = keys.find((k) => {
+    const n = normalizeLoose(k);
+    return n.includes(exactNorm) || exactNorm.includes(n);
+  });
+  if (contains) return contains;
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   const title = request.nextUrl.searchParams.get("title");
   const level = normalizeLevel(request.nextUrl.searchParams.get("level"));
@@ -48,14 +74,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const decoded = decodeURIComponent(title);
-    const fileCandidates = CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy;
+    const fileCandidates = Array.from(
+      new Set([...(CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy), ...ALL_CONTENT_FILES])
+    );
 
     for (const fileName of fileCandidates) {
       const filePath = join(process.cwd(), "content1", fileName);
       if (!existsSync(filePath)) continue;
       const fileContent = readFileSync(filePath, "utf-8");
       const contentMap: Record<string, string> = JSON.parse(fileContent);
-      const content = getContentForTitle(contentMap, decoded);
+      let content = getContentForTitle(contentMap, decoded);
+      if (!content) {
+        const bestKey = findBestContentKey(Object.keys(contentMap), decoded);
+        if (bestKey) content = contentMap[bestKey];
+      }
       if (content) {
         return NextResponse.json({ title: decoded, content, levelUsed: level, sourceFile: fileName });
       }

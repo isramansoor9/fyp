@@ -7,6 +7,11 @@ const CONTENT_FILES_BY_LEVEL: Record<string, string[]> = {
   intermediate: ["IntermediateContentCourse2.json", "EasyContentCourse2.json"],
   advanced: ["AdvancedContentCourse2.json", "EasyContentCourse2.json"],
 };
+const ALL_CONTENT_FILES = [
+  "EasyContentCourse2.json",
+  "IntermediateContentCourse2.json",
+  "AdvancedContentCourse2.json",
+];
 
 function normalizeLevel(level: string | null): string {
   const lv = (level || "").toLowerCase();
@@ -66,7 +71,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const decoded = decodeURIComponent(title);
-    const fileCandidates = CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy;
+    const fileCandidates = Array.from(
+      new Set([...(CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy), ...ALL_CONTENT_FILES])
+    );
     let content: string | null = null;
     let sourceFile = "";
 
@@ -87,10 +94,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (!content) {
-      return NextResponse.json(
-        { error: "Content not found", title: decoded },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        title: decoded,
+        content: "Content for this topic is being prepared. Check back soon for detailed learning material.",
+      });
     }
 
     return NextResponse.json({ title: decoded, content, levelUsed: level, sourceFile });

@@ -24,6 +24,10 @@ interface Topic {
   subtopics: Subtopic[];
 }
 
+function normalizeProgressKey(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 function buildFlatContentKeys(topics: Topic[]): { contentKey: string; globalIndex: number }[] {
   const list: { contentKey: string; globalIndex: number }[] = [];
   let index = 0;
@@ -104,18 +108,22 @@ export default function Course3LearnPage() {
   };
 
   const flatContentKeys = useMemo(() => buildFlatContentKeys(topics), [topics]);
-  const lastCompletedIndex = useMemo(() => {
-    const studiedIndices = flatContentKeys
-      .filter((f) => completedContentSet.has(f.contentKey))
-      .map((f) => f.globalIndex);
-    return studiedIndices.length ? Math.max(...studiedIndices) : -1;
+  const maxUnlockedIndex = useMemo(() => {
+    let contiguousCompleted = 0;
+    for (const item of flatContentKeys) {
+      if (completedContentSet.has(normalizeProgressKey(item.contentKey))) {
+        contiguousCompleted += 1;
+        continue;
+      }
+      break;
+    }
+    return contiguousCompleted; // immediate next topic after contiguous completed block
   }, [flatContentKeys, completedContentSet]);
-  const maxUnlockedIndex = lastCompletedIndex + 1;
 
   const isContentLocked = (contentKey: string): boolean => {
     const found = flatContentKeys.find((f) => f.contentKey === contentKey);
     if (!found) return true;
-    const isStudied = completedContentSet.has(contentKey);
+    const isStudied = completedContentSet.has(normalizeProgressKey(contentKey));
     return !isStudied && found.globalIndex > maxUnlockedIndex;
   };
 
@@ -133,10 +141,10 @@ export default function Course3LearnPage() {
         }),
       })
         .then((r) => (r.ok ? r.json() : Promise.resolve({ subtopics: {} })))
-        .then((d: { subtopics?: Record<string, { hasContent?: boolean }> }) => {
+        .then((d: { subtopics?: Record<string, { hasContent?: boolean; studied?: boolean }> }) => {
           const completed = Object.entries(d.subtopics || {})
-            .filter(([, meta]) => Boolean(meta?.hasContent))
-            .map(([subtopic]) => subtopic);
+            .filter(([, meta]) => Boolean(meta?.hasContent) || Boolean(meta?.studied))
+            .map(([subtopic]) => normalizeProgressKey(subtopic));
           setCompletedContentSet(new Set(completed));
         })
         .catch(() => {});

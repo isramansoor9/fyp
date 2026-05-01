@@ -270,4 +270,3 @@ def recommend_resources_from_content(generated_content: str, top_k: int = 5) -> 
     seen.add(url)
     recs.append({"url": url, "topic": topic})
   return recs[:top_k]
-

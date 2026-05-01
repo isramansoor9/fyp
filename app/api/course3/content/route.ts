@@ -16,6 +16,11 @@ const CONTENT_FILES_BY_LEVEL: Record<string, (semester: string) => string[]> = {
     `EasyContentCourse3-${semester}.json`,
   ],
 };
+const ALL_FILES_FOR_SEMESTER = (semester: string) => [
+  `EasyContentCourse3-${semester}.json`,
+  `IntermediateContentCourse3-${semester}.json`,
+  `AdvancedContentCourse3-${semester}.json`,
+];
 
 function normalizeLevel(level: string | null): string {
   const lv = (level || "").toLowerCase();
@@ -96,7 +101,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const decoded = decodeURIComponent(title);
-    const fileCandidates = (CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy)(semester);
+    const fileCandidates = Array.from(
+      new Set([
+        ...(CONTENT_FILES_BY_LEVEL[level] || CONTENT_FILES_BY_LEVEL.easy)(semester),
+        ...ALL_FILES_FOR_SEMESTER(semester),
+      ])
+    );
 
     for (const fileName of fileCandidates) {
       const filePath = join(process.cwd(), "content3", folder, fileName);
