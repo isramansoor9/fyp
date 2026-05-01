@@ -22,15 +22,24 @@ export function SiteNavbar({ urdu, right }: SiteNavbarProps) {
         </Link>
 
         <div className="flex items-center gap-6">
-          <span className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
+          <Link
+            href="/sparky"
+            className="text-sm hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full"
+          >
             {urdu ? "اسپارکی" : "Sparky"}
-          </span>
-          <span className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
+          </Link>
+          <Link
+            href="/assessment"
+            className="text-sm hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full"
+          >
             {urdu ? "خودکار اسیسمنٹ" : "Automated Assessment"}
-          </span>
-          <span className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
+          </Link>
+          <Link
+            href="/#explore-courses"
+            className="text-sm hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full"
+          >
             {urdu ? "کورسز" : "Courses"}
-          </span>
+          </Link>
           <Link
             href="/dashboard"
             className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full"

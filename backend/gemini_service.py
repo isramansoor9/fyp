@@ -13,6 +13,7 @@ from gemini_prompts import (
     BUILDER_VALIDATOR_SYSTEM,
     build_personalization_system_prompt,
     build_personalization_user_prompt,
+    build_sparky_prompt,
 )
 try:
     from google import genai
@@ -162,3 +163,21 @@ def personalize_content(
     result = (response.text or "").strip()
     print(f"[Gemini Personalize] Got {len(result)} chars back")
     return result
+
+
+def sparky_reply(conversation_history: str, retrieved_chunks: str, user_question: str) -> str:
+    """
+    Sparky chat turn: vocational instructor persona (same Gemini stack as personalization).
+    """
+    client = get_client()
+    prompt = build_sparky_prompt(conversation_history, retrieved_chunks, user_question)
+    print(f"[Gemini Sparky] PromptLen={len(prompt)}, HistLen={len(conversation_history or '')}")
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.55,
+            max_output_tokens=4096,
+        ),
+    )
+    return (response.text or "").strip()

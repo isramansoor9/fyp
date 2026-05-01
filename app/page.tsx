@@ -145,7 +145,7 @@ export default function Home() {
       </section>
 
       {/* Explore Courses Section */}
-      <section className="px-8 py-5 max-w-7xl mx-auto">
+      <section id="explore-courses" className="px-8 py-5 max-w-7xl mx-auto scroll-mt-24">
         <h2 className="text-3xl font-bold mb-8">{urdu ? "کورسز دریافت کریں" : "Explore Courses"}</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

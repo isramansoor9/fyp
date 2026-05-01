@@ -1,7 +1,9 @@
 import os
+import json
 import random
 import traceback
-from typing import Tuple
+from pathlib import Path
+from typing import Tuple, Any
 from datetime import datetime, UTC
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from flask import Flask, jsonify, request
@@ -12,7 +14,10 @@ from pymongo import ASCENDING
 from dotenv import load_dotenv
 import bcrypt
 import re
-load_dotenv()
+
+_BACKEND_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _BACKEND_DIR.parent
+load_dotenv(_BACKEND_DIR / ".env")
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 if not gemini_api_key:
     print("[WARNING] GEMINI_API_KEY is not set – personalization and quiz judge will be unavailable.")
@@ -30,15 +35,13 @@ app = Flask(__name__)
 # Allow Next.js dev server by default; override with CORS_ORIGIN env for deploy
 cors_origin = os.getenv("CORS_ORIGIN", "http://localhost:3000")
 CORS(app, resources={r"/api/*": {"origins": cors_origin}}, supports_credentials=False)
-mongo_uri = os.getenv("MONGODB_URI")
-mongo_uri = "mongodb+srv://abdullahmalhi361_db_user:EtKklr72IwZMLkNC@teachus1.pw2lfiw.mongodb.net/?appName=Teachus1"
-mongo_db = os.getenv("MONGODB_DB", "Teachus1")
 
-if not mongo_uri:
-  raise RuntimeError("MONGODB_URI must be set in .env for the Flask backend.")
+# MongoDB (configured in code per deployment — not read from environment)
+MONGO_URI = "mongodb+srv://abdullahmalhi361_db_user:EtKklr72IwZMLkNC@teachus1.pw2lfiw.mongodb.net/?appName=Teachus1"
+MONGO_DB = "Teachus1"
 
-mongo_client = MongoClient(mongo_uri)
-db = mongo_client[mongo_db]
+mongo_client = MongoClient(MONGO_URI)
+db = mongo_client[MONGO_DB]
 users: Collection = db["users"]
 quiz_submissions: Collection = db["quiz_submissions"]
 personalized_content: Collection = db["personalized_content"]
@@ -52,6 +55,20 @@ user_subtopics.create_index(
 )
 user_subtopics.create_index([("userId", ASCENDING), ("course", ASCENDING)], name="idx_user_course")
 user_subtopics.create_index([("userId", ASCENDING), ("studied", ASCENDING)], name="idx_user_studied")
+
+sparky_sessions: Collection = db["sparky_sessions"]
+sparky_sessions.create_index(
+  [("userId", ASCENDING), ("dateKey", ASCENDING)],
+  unique=True,
+  name="uniq_sparky_user_day",
+)
+
+LEVEL_QUIZ_MIX_ASSESS = {
+  "easy": {"Easy": 4, "Intermediate": 1},
+  "intermediate": {"Easy": 1, "Intermediate": 3, "Hard": 1},
+  "advanced": {"Easy": 1, "Intermediate": 1, "Hard": 3},
+}
+
 
 def normalize_email(email: str) -> str:
   return email.strip().lower()
@@ -88,6 +105,104 @@ def validate_register_payload(body: dict) -> Tuple[bool, str]:
   if len(cnic) != 13 or not cnic.isdigit():
     return False, "CNIC must be exactly 13 digits (numbers only)."
   return True, ""
+
+
+_DATE_KEY_OK = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _sanitize_date_key(s: str) -> str | None:
+  s = (s or "").strip()
+  if _DATE_KEY_OK.fullmatch(s):
+    return s
+  return None
+
+
+def _flatten_qa_map(qa_map: dict[str, Any]) -> list[dict[str, Any]]:
+  out: list[dict[str, Any]] = []
+  for _, sources in (qa_map or {}).items():
+    if not isinstance(sources, list):
+      continue
+    for src in sources:
+      if not isinstance(src, dict):
+        continue
+      url = (src.get("url") or "").strip()
+      pairs = src.get("qa_pairs") or []
+      if not isinstance(pairs, list):
+        continue
+      for qa in pairs:
+        if not isinstance(qa, dict):
+          continue
+        qtxt = (qa.get("Question") or qa.get("question") or "").strip()
+        ans = (qa.get("Answer") or qa.get("answer") or "").strip()
+        if not qtxt:
+          continue
+        out.append(
+          {
+            "question": qtxt,
+            "modelAnswer": ans,
+            "answer": ans,
+            "difficulty": (qa.get("Difficulty") or qa.get("difficulty") or "Easy"),
+            "knowledgeDimension": (qa.get("KnowledgeDimension") or qa.get("knowledgeDimension") or "Factual"),
+            "sourceUrl": url or "",
+          }
+        )
+  return out
+
+
+def _course_qa_paths(course: str) -> list[Path]:
+  root = _PROJECT_ROOT
+  if course == "Course 1":
+    return [root / "content1" / "Course1QAs.json"]
+  if course == "Course 2":
+    return [root / "content2" / "Course2QAs.json"]
+  if course == "Course 3":
+    return [
+      root / "content3" / "Course3-1" / "Course3-1QAs.json",
+      root / "content3" / "Course3-2" / "Course3-2QAs.json",
+    ]
+  return []
+
+
+def _load_all_assessment_pairs(course: str) -> list[dict[str, Any]]:
+  merged: list[dict[str, Any]] = []
+  for pth in _course_qa_paths(course):
+    try:
+      if not pth.is_file():
+        continue
+      with open(pth, encoding="utf-8") as f:
+        qa_map = json.load(f)
+      merged.extend(_flatten_qa_map(qa_map))
+    except (OSError, json.JSONDecodeError) as exc:
+      print(f"[Assessment] Skip QA file {pth}: {exc}")
+  return merged
+
+
+def _shuffle_assessment_by_level(all_pairs: list[dict[str, Any]], level_key: str) -> list[dict[str, Any]]:
+  mix = LEVEL_QUIZ_MIX_ASSESS.get(level_key) or LEVEL_QUIZ_MIX_ASSESS["easy"]
+  selected: list[dict[str, Any]] = []
+  remaining = list(all_pairs)
+  random.shuffle(remaining)
+
+  def pop_first_match(difficulty: str) -> dict[str, Any] | None:
+    for i, x in enumerate(remaining):
+      if (x.get("difficulty") or "") == difficulty:
+        return remaining.pop(i)
+    return None
+
+  for difficulty, count in mix.items():
+    for _ in range(count):
+      if len(selected) >= 5:
+        break
+      got = pop_first_match(difficulty)
+      if got:
+        selected.append(got)
+
+  while len(selected) < 5 and remaining:
+    selected.append(remaining.pop(0))
+
+  random.shuffle(selected)
+  return selected[:5]
+
 
 @app.route("/api/health", methods=["GET"])
 def health():
@@ -1161,8 +1276,215 @@ def personalize_content():
       "cached": False,
       "contentGenerated": True,
       "personalizationFallback": True,
-      "detail": str(e),
+      "message": "Personalization used fallback content.",
     }), 200
+
+
+def _find_user_by_ids(user_id: str, email: str):
+  if user_id:
+    u = users.find_one({"userId": user_id.strip()})
+    if u:
+      return u
+  if email:
+    u = users.find_one({"email": normalize_email(email)})
+    if u:
+      return u
+  return None
+
+
+@app.route("/api/sparky/sessions", methods=["GET"])
+def sparky_list_sessions():
+  user_id = request.args.get("userId", "").strip()
+  email = normalize_email(request.args.get("email", ""))
+  if not user_id and not email:
+    return jsonify({"error": "userId or email is required."}), 400
+  user = _find_user_by_ids(user_id, email)
+  if not user:
+    return jsonify({"error": "User not found."}), 404
+  resolved = user.get("userId") or user.get("email")
+  cursor = (
+    sparky_sessions.find({"userId": resolved}, {"dateKey": 1, "messages": 1, "updatedAt": 1})
+    .sort("dateKey", -1)
+    .limit(60)
+  )
+  out = []
+  for doc in cursor:
+    msgs = doc.get("messages") or []
+    preview = ""
+    for m in reversed(msgs):
+      if isinstance(m, dict) and m.get("role") == "user" and m.get("content"):
+        preview = str(m.get("content", ""))[:120]
+        break
+    out.append(
+      {
+        "dateKey": doc.get("dateKey", ""),
+        "preview": preview,
+        "messageCount": len(msgs),
+        "updatedAt": doc.get("updatedAt").isoformat() if doc.get("updatedAt") else None,
+      }
+    )
+  return jsonify({"sessions": out}), 200
+
+
+@app.route("/api/sparky/session", methods=["GET"])
+def sparky_get_session():
+  user_id = request.args.get("userId", "").strip()
+  email = normalize_email(request.args.get("email", ""))
+  date_key = _sanitize_date_key(request.args.get("dateKey", ""))
+  if not user_id and not email:
+    return jsonify({"error": "userId or email is required."}), 400
+  if not date_key:
+    return jsonify({"error": "Valid dateKey (YYYY-MM-DD) is required."}), 400
+  user = _find_user_by_ids(user_id, email)
+  if not user:
+    return jsonify({"error": "User not found."}), 404
+  resolved = user.get("userId") or user.get("email")
+  doc = sparky_sessions.find_one({"userId": resolved, "dateKey": date_key})
+  msgs = (doc or {}).get("messages") or []
+  return jsonify({"dateKey": date_key, "messages": msgs}), 200
+
+
+@app.route("/api/sparky/chat", methods=["POST"])
+def sparky_chat():
+  body = request.get_json(silent=True) or {}
+  user_id = body.get("userId", "").strip()
+  email = normalize_email(body.get("email", ""))
+  message = (body.get("message") or "").strip()
+  date_key = _sanitize_date_key(body.get("dateKey", ""))
+  if not user_id and not email:
+    return jsonify({"error": "userId or email is required."}), 400
+  if not message:
+    return jsonify({"error": "message is required."}), 400
+  if len(message) > 12000:
+    return jsonify({"error": "Message is too long."}), 400
+  user = _find_user_by_ids(user_id, email)
+  if not user:
+    return jsonify({"error": "User not found."}), 404
+  resolved = user.get("userId") or user.get("email")
+  if not date_key:
+    return jsonify({"error": "Valid dateKey (YYYY-MM-DD) is required."}), 400
+
+  prev_doc = sparky_sessions.find_one({"userId": resolved, "dateKey": date_key})
+  prior_msgs: list = list((prev_doc or {}).get("messages") or [])
+  if len(prior_msgs) > 40:
+    prior_msgs = prior_msgs[-40:]
+
+  history_lines: list[str] = []
+  for m in prior_msgs:
+    if not isinstance(m, dict):
+      continue
+    role = (m.get("role") or "").strip().upper()
+    content = (m.get("content") or "").strip()
+    if content and role in {"USER", "ASSISTANT"}:
+      history_lines.append(f"{role}: {content}")
+  history_text = "\n".join(history_lines[-24:])
+
+  retrieved_block = ""
+  try:
+    from rag_pipeline import retrieve_context
+
+    chunks = retrieve_context(message)
+    if chunks:
+      parts = []
+      for i, c in enumerate(chunks, 1):
+        if not isinstance(c, dict):
+          continue
+        parts.append(
+          f"[{i}] topic={c.get('topic', '')} url={c.get('url', '')}\n{c.get('text', '')}"
+        )
+      retrieved_block = "\n\n".join(parts)
+  except Exception as rag_err:
+    print(f"[Sparky] RAG skipped: {rag_err}")
+
+  reply_body = ""
+  used_fallback = False
+  if not GEMINI_AVAILABLE:
+    reply_body = (
+      "⚠️ **Assistant unavailable**\n\nThe AI tutor can't run right now (missing Gemini API configuration). "
+      "Please configure `GEMINI_API_KEY` on the server, or continue learning from course materials."
+    )
+    used_fallback = True
+  else:
+    try:
+      from gemini_service import sparky_reply
+
+      with ThreadPoolExecutor(max_workers=1) as executor:
+        fut = executor.submit(sparky_reply, history_text, retrieved_block, message)
+        try:
+          reply_body = fut.result(timeout=90)
+        except FuturesTimeoutError:
+          reply_body = (
+            "**That took a bit long.** I couldn't finish in time—please try sending a shorter question, or try again in a moment."
+          )
+          used_fallback = True
+    except Exception as e:
+      _mark_gemini_unavailable(e)
+      print(f"[Sparky] ERROR: {e}")
+      traceback.print_exc()
+      reply_body = (
+        "**I'm having trouble reaching the AI service right now.** "
+        "Please try again shortly. If you were asking about safety-critical work, consult a qualified technician."
+      )
+      used_fallback = True
+
+  now = datetime.utcnow()
+  now_iso = now.isoformat() + "Z"
+  updated_messages = prior_msgs + [
+    {"role": "user", "content": message, "at": now_iso},
+    {"role": "assistant", "content": reply_body, "at": now_iso},
+  ]
+  sparky_sessions.update_one(
+    {"userId": resolved, "dateKey": date_key},
+    {
+      "$set": {"messages": updated_messages, "updatedAt": now},
+      "$setOnInsert": {"createdAt": now},
+    },
+    upsert=True,
+  )
+
+  return jsonify(
+    {
+      "reply": reply_body,
+      "messages": updated_messages,
+      "dateKey": date_key,
+      "sparkyFallback": used_fallback,
+    }
+  ), 200
+
+
+@app.route("/api/assessment/random-questions", methods=["POST"])
+def assessment_random_questions():
+  body = request.get_json(silent=True) or {}
+  user_id = body.get("userId", "").strip()
+  email = normalize_email(body.get("email", ""))
+  if not user_id and not email:
+    return jsonify({"error": "userId or email is required."}), 400
+  user = _find_user_by_ids(user_id, email)
+  if not user:
+    return jsonify({"error": "User not found."}), 404
+  course = (user.get("course") or user.get("courseEnrolled") or "").strip()
+  if course not in VALID_COURSES:
+    return jsonify({"error": "You must enroll in Course 1, 2, or 3 before using automated assessment."}), 403
+
+  level_key = _normalize_level(user.get("level"))
+  pairs = _load_all_assessment_pairs(course)
+  if not pairs:
+    return jsonify({"error": "No assessment questions are available for this course yet."}), 404
+
+  picked = _shuffle_assessment_by_level(pairs, level_key)
+  out_q = []
+  for p in picked:
+    out_q.append(
+      {
+        "question": p.get("question", ""),
+        "modelAnswer": p.get("modelAnswer", ""),
+        "difficulty": p.get("difficulty", "Easy"),
+        "knowledgeDimension": p.get("knowledgeDimension", "Factual"),
+        "sourceUrl": p.get("sourceUrl", ""),
+      }
+    )
+  return jsonify({"course": course, "level": level_key, "questions": out_q}), 200
+
 
 @app.route("/api/subtopic/<path:subtopic_id>", methods=["GET"])
 def get_subtopic(subtopic_id: str):
