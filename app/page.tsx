@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import { useState } from "react";
 import { useAuth, getDisplayName } from "@/contexts/AuthContext";
 import { User } from "lucide-react";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
-import { DataCollectionChart } from "./components/DataCollectionChartRestored";
+import { DataCollectionChart } from "./components/DataCollectionChartMain";
+import { SiteNavbar } from "./components/SiteNavbar";
+import logoTevta from "./images/tevta.png";
+import logoNavttc from "./images/navttc.png";
 import logoDaad from "./images/daad.png";
 import logoDfki from "./images/dfki.png";
 import logoMachvis from "./images/machvis.png";
-import logoNavttc from "./images/navttc.png";
-import logoTevta from "./images/tevta.png";
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -39,7 +40,7 @@ export default function Home() {
   ];
   const partnerLogoWarmTone =
     "[filter:grayscale(100%)_sepia(72%)_saturate(48%)_hue-rotate(343deg)_contrast(1.04)_brightness(1.12)]";
-  const partnerLogos: { name: string; src: StaticImageData; compact?: boolean; large?: boolean }[] = [
+  const partnerLogos = [
     { name: "TEVTA", src: logoTevta, compact: true },
     { name: "NAVTTC", src: logoNavttc },
     { name: "DAAD", src: logoDaad, compact: true },
@@ -49,55 +50,31 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen bg-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      {/* Navigation with subtle shadow */}
-      <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-sm">
-        <div className="flex items-center gap-10">
-          <div className="flex items-center gap-2 group cursor-pointer">
-            <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <span className="text-lg font-bold text-black tracking-wide transition-colors duration-200 group-hover:text-gray-700">
-              Teachus
-            </span>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <span className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
-              {urdu ? "اسپارکی" : "Sparky"}
-            </span>
-            <span className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
-              {urdu ? "خودکار اسیسمنٹ" : "Automated Assessment"}
-            </span>
-            <span className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
-              {urdu ? "کورسز" : "Courses"}
-            </span>
-            <Link href="/dashboard" className="text-sm cursor-pointer hover:text-gray-700 transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-black after:transition-all after:duration-300 hover:after:w-full">
-              {urdu ? "یوزر ڈیش بورڈ" : "User Dashboard"}
+      <SiteNavbar
+        urdu={urdu}
+        right={
+          !isLoading && isLoggedIn && user ? (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
+            >
+              <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
+                <User className="w-4 h-4" />
+              </span>
+              <span className="max-w-[120px] truncate">{getDisplayName(user)}</span>
             </Link>
-          </div>
-        </div>
-
-        {!isLoading && isLoggedIn && user ? (
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
-          >
-            <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
-              <User className="w-4 h-4" />
-            </span>
-            <span className="max-w-[120px] truncate">{getDisplayName(user)}</span>
-          </Link>
-        ) : !isLoading ? (
-          <Link
-            href="/login"
-            className="bg-black text-white px-6 py-2 rounded text-sm font-medium transition-all duration-300 hover:bg-gray-800 transform hover:scale-105 hover:shadow-lg"
-          >
-            {urdu ? "لاگ اِن" : "Login"}
-          </Link>
-        ) : (
-          <div className="h-10 w-24 rounded bg-gray-100 animate-pulse" aria-hidden="true" />
-        )}
-      </nav>
+          ) : !isLoading ? (
+            <Link
+              href="/login"
+              className="bg-black text-white px-6 py-2 rounded text-sm font-medium transition-all duration-300 hover:bg-gray-800 transform hover:scale-105 hover:shadow-lg"
+            >
+              {urdu ? "لاگ اِن" : "Login"}
+            </Link>
+          ) : (
+            <div className="h-10 w-24 rounded bg-gray-100 animate-pulse" aria-hidden="true" />
+          )
+        }
+      />
 
       {/* Hero Section */}
       <section className="px-8 py-16 max-w-7xl mx-auto">
@@ -114,7 +91,7 @@ export default function Home() {
           </p>
           {!isLoading && (
             <Link
-              href={isLoggedIn ? "/dashboard" : "/register"}
+              href="/course1"
               className="inline-block bg-[#c3bebb] text-black px-8 py-3 rounded font-medium transition-all duration-300 hover:bg-[#b8b2af] transform hover:scale-[1.02] hover:shadow-md"
             >
               {urdu ? "شروع کریں" : "Get Started"}
@@ -133,8 +110,7 @@ export default function Home() {
                 <Image
                   src={partner.src}
                   alt={`${partner.name} logo`}
-                  placeholder="blur"
-                  className={`w-full max-w-full object-contain ${partnerLogoWarmTone} ${
+                  className={`h-auto w-full max-w-full object-contain ${partnerLogoWarmTone} ${
                     partner.compact
                       ? "max-h-[4.25rem] sm:max-h-[5rem]"
                       : partner.large
@@ -453,7 +429,7 @@ export default function Home() {
           </p>
           {!isLoading && (
             <Link
-              href={isLoggedIn ? "/dashboard" : "/register"}
+              href="/course1"
               className="inline-block bg-white text-black px-10 py-3 rounded font-semibold transition-all duration-300 hover:bg-gray-100 transform hover:scale-105 hover:shadow-xl"
             >
               {urdu ? "شروع کریں" : "Get Started"}
@@ -521,56 +497,49 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer
-        className="text-black px-8 py-12"
-        style={{ backgroundColor: "#c3bebb" }}
-      >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {/* Logo */}
-          <div>
-            <h3 className="text-xl font-bold">Teachus</h3>
-            <p className="text-black mt-2 text-sm">
-              Empowering youth with modern vocational skills.
-            </p>
+      <footer className="text-black px-8 py-14" style={{ backgroundColor: "#c3bebb" }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
+            <div className="md:col-span-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#6f6461] text-white flex items-center justify-center font-bold text-lg">T</div>
+                <h3 className="text-2xl font-bold">Teachus</h3>
+              </div>
+            </div>
+
+            <div className="md:col-span-3">
+              <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm text-[#4a3f3c]">Quick Links</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/course1" className="hover:text-[#6f6461] transition-colors">Courses</Link></li>
+                <li><Link href="/dashboard" className="hover:text-[#6f6461] transition-colors">User Dashboard</Link></li>
+                <li><Link href="/course1/content" className="hover:text-[#6f6461] transition-colors">Automated Assessment</Link></li>
+                <li><Link href="/course1/learn" className="hover:text-[#6f6461] transition-colors">Sparky</Link></li>
+              </ul>
+            </div>
+
+            <div className="md:col-span-4">
+              <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm text-[#4a3f3c]">Contact Us</h4>
+              <ul className="space-y-2 text-sm text-[#2e2624]">
+                <li>
+                  <a href="mailto:support@teachus.com" className="hover:text-[#6f6461] transition-colors">
+                    support@teachus.com
+                  </a>
+                </li>
+                <li>
+                  <a href="tel:+923001234567" className="hover:text-[#6f6461] transition-colors">
+                    +92 300 1234567
+                  </a>
+                </li>
+                <li>Islamabad, Pakistan</li>
+              </ul>
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-black text-sm">
-              <li className="cursor-pointer hover:text-gray-700 transition-all duration-200 hover:translate-x-1">
-                Courses
-              </li>
-              <li className="cursor-pointer hover:text-gray-700 transition-all duration-200 hover:translate-x-1">
-                User Dashboard
-              </li>
-              <li className="cursor-pointer hover:text-gray-700 transition-all duration-200 hover:translate-x-1">
-                Automated Assessment
-              </li>
-              <li className="cursor-pointer hover:text-gray-700 transition-all duration-200 hover:translate-x-1">
-                Sparky
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-2 text-black text-sm">
-              <li className="cursor-pointer hover:text-gray-700 transition-all duration-200 hover:translate-x-1">
-                Email: support@teachus.com
-              </li>
-              <li className="cursor-pointer hover:text-gray-700 transition-all duration-200 hover:translate-x-1">
-                Phone: +92 300 1234567
-              </li>
-              <li>Location: Islamabad, Pakistan</li>
-            </ul>
+          <div className="mt-10 pt-6 border-t border-[#9f9490]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-sm text-[#4a3f3c]">© {new Date().getFullYear()} Teachus. All rights reserved.</p>
+            <p className="text-xs text-[#5a4f4c]">Built for employability, inclusion, and youth empowerment.</p>
           </div>
         </div>
-
-        <p className="text-center text-black text-sm mt-10">
-          © {new Date().getFullYear()} Teachus. All rights reserved.
-        </p>
       </footer>
 
       <style jsx>{`

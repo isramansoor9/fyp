@@ -15,7 +15,8 @@ function makeTrend(data: number[]) {
   const n = data.length;
   const xMean = (n - 1) / 2;
   const yMean = data.reduce((a, b) => a + b, 0) / n;
-  let num = 0, den = 0;
+  let num = 0;
+  let den = 0;
   data.forEach((y, x) => {
     num += (x - xMean) * (y - yMean);
     den += (x - xMean) ** 2;
@@ -187,14 +188,7 @@ function SingleChart({ id, data, yLabel, yMax, animate, urdu }: ChartProps) {
     };
   }, [animate, urdu]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      id={id}
-      role="img"
-      aria-label={`Bar chart: ${yLabel}`}
-    />
-  );
+  return <canvas ref={canvasRef} id={id} role="img" aria-label={`Bar chart: ${yLabel}`} />;
 }
 
 export function DataCollectionChart({ urdu }: { urdu: boolean }) {
@@ -273,49 +267,21 @@ export function DataCollectionChart({ urdu }: { urdu: boolean }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div
-          className="rounded-xl p-5"
-          style={{
-            background: "var(--color-background-primary, #fff)",
-            border: "0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1))",
-          }}
-        >
+        <div className="rounded-xl p-5" style={{ background: "var(--color-background-primary, #fff)", border: "0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1))" }}>
           <p className="text-2xl font-bold mb-4" style={{ color: "#4a3f3c" }}>
             {urdu ? "کورس کے مطابق منتقلاں" : "Transcripts per course"}
           </p>
           <div className="relative" style={{ height: "420px" }}>
-            <SingleChart
-              key={`transcripts-${animKey}`}
-              id="chart-transcripts"
-              data={BAR_DATA.transcripts}
-              yLabel={urdu ? "تعداد" : "Count"}
-              yMax={2800}
-              animate={inView}
-              urdu={urdu}
-            />
+            <SingleChart key={`transcripts-${animKey}`} id="chart-transcripts" data={BAR_DATA.transcripts} yLabel={urdu ? "تعداد" : "Count"} yMax={2800} animate={inView} urdu={urdu} />
           </div>
         </div>
 
-        <div
-          className="rounded-xl p-5"
-          style={{
-            background: "var(--color-background-primary, #fff)",
-            border: "0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1))",
-          }}
-        >
+        <div className="rounded-xl p-5" style={{ background: "var(--color-background-primary, #fff)", border: "0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.1))" }}>
           <p className="text-2xl font-bold mb-4" style={{ color: "#4a3f3c" }}>
             {urdu ? "کورس کے مطابق سوال جواب" : "QA pairs per course"}
           </p>
           <div className="relative" style={{ height: "420px" }}>
-            <SingleChart
-              key={`qa-${animKey}`}
-              id="chart-qa"
-              data={BAR_DATA.qa}
-              yLabel={urdu ? "تعداد" : "Count"}
-              yMax={23000}
-              animate={inView}
-              urdu={urdu}
-            />
+            <SingleChart key={`qa-${animKey}`} id="chart-qa" data={BAR_DATA.qa} yLabel={urdu ? "تعداد" : "Count"} yMax={23000} animate={inView} urdu={urdu} />
           </div>
         </div>
       </div>

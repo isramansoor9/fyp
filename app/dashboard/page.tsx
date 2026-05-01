@@ -53,7 +53,6 @@ export default function DashboardPage() {
   if (!loading && !userTyped) {
     return (
       <div className="min-h-screen bg-white text-black">
-        {/* Nav */}
         <nav className="sticky top-0 z-50 flex items-center justify-between bg-white/95 px-4 py-4 shadow-sm backdrop-blur-sm sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
             <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
@@ -164,50 +163,49 @@ export default function DashboardPage() {
 
   return (
     <div className={`min-h-screen bg-gray-50 text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/95 px-4 py-4 shadow-sm backdrop-blur-sm sm:px-6 lg:px-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-          <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-            <span className="text-white font-bold text-lg">T</span>
-          </div>
-          <span className="text-lg font-bold text-black tracking-wide">Teachus</span>
-        </Link>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
-            <button
-              onClick={() => handleLanguageSwitch("english")}
-              disabled={updatingLanguage}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${!urdu ? "bg-black text-white" : "text-gray-700 hover:bg-white"}`}
-            >
-              English
-            </button>
-            <button
-              onClick={() => handleLanguageSwitch("urdu")}
-              disabled={updatingLanguage}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${urdu ? "bg-black text-white" : "text-gray-700 hover:bg-white"}`}
-            >
-              اردو
-            </button>
-          </div>
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
-          >
-            <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center flex-shrink-0">
-              <User className="w-4 h-4" />
-            </span>
-            <span className="text-sm font-medium max-w-[140px] truncate hidden sm:inline">
-              {userTyped && getDisplayName(userTyped)}
-            </span>
+          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
+            <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+              <span className="text-white font-bold text-lg">T</span>
+            </div>
+            <span className="text-lg font-bold text-black tracking-wide">Teachus</span>
           </Link>
-          <button
-            onClick={handleLogout}
-            className="bg-black text-white px-5 py-2 rounded text-sm font-medium transition-all duration-300 hover:bg-gray-800 hover:scale-105"
-          >
-            {urdu ? "لاگ آؤٹ" : "Logout"}
-          </button>
-        </div>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+              <button
+                onClick={() => handleLanguageSwitch("english")}
+                disabled={updatingLanguage}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${!urdu ? "bg-black text-white" : "text-gray-700 hover:bg-white"}`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => handleLanguageSwitch("urdu")}
+                disabled={updatingLanguage}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${urdu ? "bg-black text-white" : "text-gray-700 hover:bg-white"}`}
+              >
+                اردو
+              </button>
+            </div>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+            >
+              <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4" />
+              </span>
+              <span className="text-sm font-medium max-w-[140px] truncate hidden sm:inline">
+                {userTyped && getDisplayName(userTyped)}
+              </span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-black text-white px-5 py-2 rounded text-sm font-medium transition-all duration-300 hover:bg-gray-800 hover:scale-105"
+            >
+              {urdu ? "لاگ آؤٹ" : "Logout"}
+            </button>
+          </div>
         </div>
       </nav>
 
