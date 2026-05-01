@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import Image, { StaticImageData } from "next/image";
 import { useState } from "react";
 import { useAuth, getDisplayName } from "@/contexts/AuthContext";
 import { User } from "lucide-react";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
+import { DataCollectionChart } from "./components/DataCollectionChartRestored";
+import logoDaad from "./images/daad.png";
+import logoDfki from "./images/dfki.png";
+import logoMachvis from "./images/machvis.png";
+import logoNavttc from "./images/navttc.png";
+import logoTevta from "./images/tevta.png";
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -29,6 +36,15 @@ export default function Home() {
       q: urdu ? "کیا پہلے سے تکنیکی علم ضروری ہے؟" : "Do I need prior technical knowledge?",
       a: urdu ? "نہیں، تمام کورسز بنیادی سطح سے شروع ہو کر بتدریج اعلیٰ مہارتوں تک لے جاتے ہیں۔" : "No, all courses start from basics and gradually move to advanced skills.",
     },
+  ];
+  const partnerLogoWarmTone =
+    "[filter:grayscale(100%)_sepia(72%)_saturate(48%)_hue-rotate(343deg)_contrast(1.04)_brightness(1.12)]";
+  const partnerLogos: { name: string; src: StaticImageData; compact?: boolean; large?: boolean }[] = [
+    { name: "TEVTA", src: logoTevta, compact: true },
+    { name: "NAVTTC", src: logoNavttc },
+    { name: "DAAD", src: logoDaad, compact: true },
+    { name: "DFKI", src: logoDfki, large: true },
+    { name: "MachVIS", src: logoMachvis },
   ];
 
   return (
@@ -96,22 +112,59 @@ export default function Home() {
               ? "پرسنلائزڈ اور کثیر لسانی تربیت جو جدید ریکمینڈیشن انٹیلیجنس سے چلتی ہے تاکہ مہارتیں بہتر ہوں، روزگار کے مواقع بڑھیں اور نوجوان بااختیار بنیں۔"
               : "Personalized, multilingual training powered by Recommendation Intelligence to enhance skills, boost employability, and drive youth empowerment."}
           </p>
-          {!isLoading && !isLoggedIn && (
+          {!isLoading && (
             <Link
-              href="/register"
-              className="inline-block bg-black text-white px-8 py-3 rounded font-medium transition-all duration-300 hover:bg-gray-800 transform hover:scale-105 hover:shadow-xl"
+              href={isLoggedIn ? "/dashboard" : "/register"}
+              className="inline-block bg-[#c3bebb] text-black px-8 py-3 rounded font-medium transition-all duration-300 hover:bg-[#b8b2af] transform hover:scale-[1.02] hover:shadow-md"
             >
-              {urdu ? "ابھی رجسٹر کریں!" : "Register now !"}
+              {urdu ? "شروع کریں" : "Get Started"}
             </Link>
           )}
         </div>
 
-        <div className="mt-12 group">
+        <div className="mt-12 sm:mt-14 w-full">
+          <div className="grid w-full grid-cols-5 gap-6 sm:gap-10 lg:gap-14 items-center">
+            {partnerLogos.map((partner, index) => (
+              <div
+                key={partner.name}
+                className="flex h-[7rem] sm:h-[8rem] items-center justify-center px-1 animate-logo-reveal opacity-0"
+                style={{ animationDelay: `${index * 0.35}s` }}
+              >
+                <Image
+                  src={partner.src}
+                  alt={`${partner.name} logo`}
+                  placeholder="blur"
+                  className={`w-full max-w-full object-contain ${partnerLogoWarmTone} ${
+                    partner.compact
+                      ? "max-h-[4.25rem] sm:max-h-[5rem]"
+                      : partner.large
+                        ? "max-h-[7.5rem] sm:max-h-[8.5rem]"
+                        : "max-h-[5.75rem] sm:max-h-[6.5rem]"
+                  }`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12 group relative overflow-hidden rounded-lg">
           <img
             src="/images/image1.png"
             alt="Car engine maintenance"
-            className="rounded-lg w-full h-auto object-contain transition-all duration-500 hover:shadow-2xl"
+            className="w-full h-auto object-contain transition-all duration-500 group-hover:shadow-2xl"
           />
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end">
+            <div className="p-6 sm:p-8 text-white max-w-2xl">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-2">
+                {urdu ? "آپ کا مستقبل، آپ کی مہارت" : "Your Future, Your Skills"}
+              </h3>
+              <p className="text-sm sm:text-base text-gray-100 leading-relaxed">
+                {urdu
+                  ? "عملی تربیت، اسمارٹ سفارشات اور ذاتی رہنمائی کے ساتھ جاب ریڈی مہارتیں حاصل کریں۔"
+                  : "Build job-ready vocational skills through practical training, smart recommendations, and personalized guidance."}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -264,6 +317,8 @@ export default function Home() {
         </div>
       </section>
 
+      <DataCollectionChart urdu={urdu} />
+
       {/* Why Choose Us Section */}
       <section className="px-8 py-10 max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold mb-10">{urdu ? "ہمیں کیوں منتخب کریں" : "Why Choose Us"}</h2>
@@ -396,12 +451,12 @@ export default function Home() {
               ? "ہزاروں سیکھنے والوں میں شامل ہوں جو Teachus کے ساتھ مطلوبہ ووکیشنل مہارتیں سیکھ رہے ہیں۔"
               : "Join thousands of learners building in-demand vocational skills with Teachus."}
           </p>
-          {!isLoading && !isLoggedIn && (
+          {!isLoading && (
             <Link
-              href="/register"
+              href={isLoggedIn ? "/dashboard" : "/register"}
               className="inline-block bg-white text-black px-10 py-3 rounded font-semibold transition-all duration-300 hover:bg-gray-100 transform hover:scale-105 hover:shadow-xl"
             >
-              {urdu ? "ابھی رجسٹر کریں" : "Register Now"}
+              {urdu ? "شروع کریں" : "Get Started"}
             </Link>
           )}
         </div>
@@ -536,6 +591,21 @@ export default function Home() {
 
         .animate-fade-in-delay {
           animation: fade-in 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes logo-reveal {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-logo-reveal {
+          animation: logo-reveal 0.55s ease-out forwards;
         }
       `}</style>
     </div>
