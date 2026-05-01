@@ -5,15 +5,14 @@ from tqdm import tqdm
 from elasticsearch import Elasticsearch, helpers
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # =========================
 # 🔐 CONFIG
 # =========================
-ELASTIC_URL = "https://dc9fcb23fc3441519d87d65e7b7f8114.us-central1.gcp.cloud.es.io:443"
-ELASTIC_API_KEY = "QjRwQVJKMEJUQTR0enl6Zm5NYVQ6OFhpVm45ekNybnRnd3R0RG1mLXA1UQ=="
-
-INDEX_NAME = "teachus"
+ELASTIC_URL = (os.getenv("ELASTIC_URL") or "").strip()
+ELASTIC_API_KEY = (os.getenv("ELASTIC_API_KEY") or "").strip()
+INDEX_NAME = os.getenv("ELASTIC_INDEX_NAME", "teachus")
 
 if not ELASTIC_URL or not ELASTIC_API_KEY:
     raise ValueError("❌ Missing ELASTIC_URL or ELASTIC_API_KEY in .env")

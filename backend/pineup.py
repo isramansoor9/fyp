@@ -3,12 +3,18 @@ import json
 import uuid
 from pathlib import Path
 from tqdm import tqdm
+from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone, ServerlessSpec
 
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
 # === Pinecone Setup ===
-api_key = "pcsk_3ME2V7_A5hCbBEtMPNzac21JhaxT3r1crbGWEaauWKEBx56FBdr8eXjQ2QZKvmV259FMTv"
-index_name = "teachusdata"
+api_key = os.getenv("PINECONE_API_KEY")
+if not api_key:
+    raise ValueError("PINECONE_API_KEY is not set — add it to backend/.env (never commit secrets).")
+
+index_name = os.getenv("PINECONE_INDEX_NAME", "teachusdata")
 region = "us-east-1"
 dimension = 384
 
@@ -94,4 +100,3 @@ for i in tqdm(
     )
 
 print("✅ Upload complete!")
-# pcsk_3ME2V7_A5hCbBEtMPNzac21JhaxT3r1crbGWEaauWKEBx56FBdr8eXjQ2QZKvmV259FMTv
