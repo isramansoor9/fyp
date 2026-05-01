@@ -126,9 +126,12 @@ function ContentView() {
             );
             const qaData = await qaRes.json();
             const quizQAs = qaData.quizQAs ?? qaData.questions ?? [];
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3500);
             const personalizeRes = await fetch("http://localhost:5000/api/personalize/content", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              signal: controller.signal,
               body: JSON.stringify({
                 userId: userId || undefined,
                 email: userEmail || undefined,
@@ -139,6 +142,7 @@ function ContentView() {
                 quizQAs: Array.isArray(quizQAs) ? quizQAs : [],
               }),
             });
+            clearTimeout(timeoutId);
             if (personalizeRes.ok) {
               const personalized = await personalizeRes.json();
               if (personalized.content && typeof personalized.content === "string") {

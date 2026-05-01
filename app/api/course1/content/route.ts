@@ -6,9 +6,9 @@ const PLACEHOLDER =
   "Content for this topic is being prepared. Check back soon for detailed learning material.";
 
 const CONTENT_FILES_BY_LEVEL: Record<string, string[]> = {
-  easy: ["finetuned_easycontent8bCourse1.json"],
-  intermediate: ["finetuned_intermediatecontent8bCourse1.json", "intermediatecontent_baseCourse1.json", "finetuned_easycontent8bCourse1.json"],
-  advanced: ["finetuned_hardcontent8bCourse1.json", "hardcontent_baseCourse1.json", "finetuned_easycontent8bCourse1.json"],
+  easy: ["EasyContentCourse1.json"],
+  intermediate: ["IntermediateContentCourse1.json", "EasyContentCourse1.json"],
+  advanced: ["AdvancedContentCourse1.json", "EasyContentCourse1.json"],
 };
 
 function normalizeLevel(level: string | null): string {

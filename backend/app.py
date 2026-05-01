@@ -907,7 +907,23 @@ def personalize_content():
   except Exception as e:
     print(f"[Personalize] ERROR: {e}")
     traceback.print_exc()
-    return jsonify({"error": "Personalization failed.", "detail": str(e)}), 500
+    # Graceful fallback: return base content instead of failing request.
+    fallback_resources = []
+    try:
+      from rag_pipeline import recommend_resources_from_content
+      fallback_resources = recommend_resources_from_content(base_content, top_k=5)
+    except Exception as rec_err:
+      print(f"[RAG] Recommendation fallback failed in exception path: {rec_err}")
+
+    fallback_content = _append_reference_resource_section(base_content, fallback_resources)
+    return jsonify({
+      "content": fallback_content,
+      "recommendedResources": fallback_resources,
+      "cached": False,
+      "contentGenerated": False,
+      "personalizationFallback": True,
+      "detail": str(e),
+    }), 200
 
 @app.route("/api/subtopic/<path:subtopic_id>", methods=["GET"])
 def get_subtopic(subtopic_id: str):
