@@ -49,6 +49,7 @@ export default function Course3LearnPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [completedContentSet, setCompletedContentSet] = useState<Set<string>>(new Set());
+  const [progressLoading, setProgressLoading] = useState(true);
   const [semester, setSemester] = useState<"1" | "2">("1");
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,7 +131,8 @@ export default function Course3LearnPage() {
   useEffect(() => {
     const u = user as { userId?: string; email?: string } | null;
     if (!u?.userId && !u?.email) return;
-    const refreshProgress = () => {
+    const refreshProgress = (silent = false) => {
+      if (!silent) setProgressLoading(true);
       fetch("http://localhost:5000/api/user/course-progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,16 +149,17 @@ export default function Course3LearnPage() {
             .map(([subtopic]) => normalizeProgressKey(subtopic));
           setCompletedContentSet(new Set(completed));
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setProgressLoading(false));
     };
     refreshProgress();
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refreshProgress();
+      if (document.visibilityState === "visible") refreshProgress(true);
     };
-    const onFocus = () => refreshProgress();
-    const onPageShow = () => refreshProgress();
-    const onProgressSync = () => refreshProgress();
+    const onFocus = () => refreshProgress(true);
+    const onPageShow = () => refreshProgress(true);
+    const onProgressSync = () => refreshProgress(true);
     window.addEventListener("focus", onFocus);
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("teachus:progress-updated", onProgressSync);
@@ -301,7 +304,14 @@ export default function Course3LearnPage() {
                     </button>
                     {open && (
                       <ul className="px-4 pb-4 md:px-5 md:pb-5 pt-1 space-y-1 bg-gray-50 border-t border-gray-100">
-                        {topic.subtopics.map((sub) => {
+                        {progressLoading
+                          ? Array.from({ length: topic.subtopics.length }).map((_, i) => (
+                              <li key={i} className="flex items-center gap-2 px-2 py-2 rounded-md">
+                                <div className="w-14 h-3 rounded bg-gray-200 animate-pulse shrink-0" />
+                                <div className="flex-1 h-3 rounded bg-gray-200 animate-pulse" style={{ width: `${60 + (i % 4) * 10}%` }} />
+                              </li>
+                            ))
+                          : topic.subtopics.map((sub) => {
                           const hasChildren = sub.subSubtopics && sub.subSubtopics.length > 0;
                           const subOpen = openSubtopics[sub.id];
 
@@ -397,6 +407,7 @@ export default function Course3LearnPage() {
               })}
             </div>
           </section>
+
         )}
       </main>
     </div>

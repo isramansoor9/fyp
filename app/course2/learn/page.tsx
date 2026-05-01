@@ -275,6 +275,7 @@ export default function Course2LearnPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [completedContentSet, setCompletedContentSet] = useState<Set<string>>(new Set());
+  const [progressLoading, setProgressLoading] = useState(true);
   const flatSubtopics = useMemo(() => buildFlatList(toc), []);
   const maxUnlockedIndex = useMemo(() => {
     let contiguousCompleted = 0;
@@ -310,7 +311,8 @@ export default function Course2LearnPage() {
   useEffect(() => {
     const u = user as { userId?: string; email?: string } | null;
     if (!u?.userId && !u?.email) return;
-    const refreshProgress = () => {
+    const refreshProgress = (silent = false) => {
+      if (!silent) setProgressLoading(true);
       fetch("http://localhost:5000/api/user/course-progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -327,16 +329,17 @@ export default function Course2LearnPage() {
             .map(([subtopic]) => normalizeProgressKey(subtopic));
           setCompletedContentSet(new Set(completed));
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setProgressLoading(false));
     };
     refreshProgress();
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") refreshProgress();
+      if (document.visibilityState === "visible") refreshProgress(true);
     };
-    const onFocus = () => refreshProgress();
-    const onPageShow = () => refreshProgress();
-    const onProgressSync = () => refreshProgress();
+    const onFocus = () => refreshProgress(true);
+    const onPageShow = () => refreshProgress(true);
+    const onProgressSync = () => refreshProgress(true);
     window.addEventListener("focus", onFocus);
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("teachus:progress-updated", onProgressSync);
@@ -372,7 +375,16 @@ export default function Course2LearnPage() {
     setOpenTheoryTopics((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const renderSubtopicSkeleton = (count: number) =>
+    Array.from({ length: count }).map((_, i) => (
+      <li key={i} className="flex items-center gap-2 px-2 py-1.5 rounded-md">
+        <div className="w-14 h-3 rounded bg-gray-200 animate-pulse shrink-0" />
+        <div className="flex-1 h-3 rounded bg-gray-200 animate-pulse" style={{ width: `${60 + (i % 4) * 10}%` }} />
+      </li>
+    ));
+
   const renderSubtopics = (topic: TopicGroup, section: "practical" | "theory") => {
+    if (progressLoading) return renderSubtopicSkeleton(topic.subtopics.length);
     return topic.subtopics.map((sub, index) => {
       const flat = flatSubtopics.find(
         (f) => f.id === sub.id && f.topicId === topic.id && f.section === section
