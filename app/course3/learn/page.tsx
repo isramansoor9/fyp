@@ -44,7 +44,7 @@ function buildFlatContentKeys(topics: Topic[]): { contentKey: string; globalInde
 export default function Course3LearnPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [studiedSet, setStudiedSet] = useState<Set<string>>(new Set());
+  const [completedContentSet, setCompletedContentSet] = useState<Set<string>>(new Set());
   const [semester, setSemester] = useState<"1" | "2">("1");
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,34 +106,60 @@ export default function Course3LearnPage() {
   const flatContentKeys = useMemo(() => buildFlatContentKeys(topics), [topics]);
   const lastCompletedIndex = useMemo(() => {
     const studiedIndices = flatContentKeys
-      .filter((f) => studiedSet.has(f.contentKey))
+      .filter((f) => completedContentSet.has(f.contentKey))
       .map((f) => f.globalIndex);
-    return studiedIndices.length ? Math.max(...studiedIndices) : 0;
-  }, [flatContentKeys, studiedSet]);
+    return studiedIndices.length ? Math.max(...studiedIndices) : -1;
+  }, [flatContentKeys, completedContentSet]);
   const maxUnlockedIndex = lastCompletedIndex + 1;
 
   const isContentLocked = (contentKey: string): boolean => {
     const found = flatContentKeys.find((f) => f.contentKey === contentKey);
     if (!found) return true;
-    const isStudied = studiedSet.has(contentKey);
+    const isStudied = completedContentSet.has(contentKey);
     return !isStudied && found.globalIndex > maxUnlockedIndex;
   };
 
   useEffect(() => {
     const u = user as { userId?: string; email?: string } | null;
     if (!u?.userId && !u?.email) return;
-    fetch("http://localhost:5000/api/user/course-progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: u?.userId,
-        email: u?.email,
-        course: "Course 3",
-      }),
-    })
-      .then((r) => (r.ok ? r.json() : Promise.resolve({ studiedSubtopics: [] })))
-      .then((d: { studiedSubtopics?: string[] }) => setStudiedSet(new Set(d.studiedSubtopics || [])))
-      .catch(() => {});
+    const refreshProgress = () => {
+      fetch("http://localhost:5000/api/user/course-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: u?.userId,
+          email: u?.email,
+          course: "Course 3",
+        }),
+      })
+        .then((r) => (r.ok ? r.json() : Promise.resolve({ subtopics: {} })))
+        .then((d: { subtopics?: Record<string, { hasContent?: boolean }> }) => {
+          const completed = Object.entries(d.subtopics || {})
+            .filter(([, meta]) => Boolean(meta?.hasContent))
+            .map(([subtopic]) => subtopic);
+          setCompletedContentSet(new Set(completed));
+        })
+        .catch(() => {});
+    };
+    refreshProgress();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refreshProgress();
+    };
+    const onFocus = () => refreshProgress();
+    const onPageShow = () => refreshProgress();
+    const onProgressSync = () => refreshProgress();
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("teachus:progress-updated", onProgressSync);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("teachus:progress-updated", onProgressSync);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [user]);
 
   const goToContent = (contentKey: string, topicTitle?: string) => {

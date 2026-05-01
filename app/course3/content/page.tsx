@@ -93,6 +93,7 @@ function ContentView() {
           }
         }
 
+        const userLevel = ((user as { level?: string } | null)?.level) || "easy";
         const params = new URLSearchParams({
           semester: semesterParam,
           title: titleParam,
@@ -102,19 +103,14 @@ function ContentView() {
         if (!res.ok) throw new Error("Content not found");
         const data: { title: string; content: string } = await res.json();
         let finalContent = data.content;
-
-        const userLevel = ((user as { level?: string } | null)?.level) || "easy";
         try {
           const qaParams = new URLSearchParams({ title: titleParam, level: userLevel, semester: semesterParam!, all: "true" });
           const qaRes = await fetch(`/api/course3/quiz?${qaParams}`);
           const qaData = await qaRes.json();
           const quizQAs = qaData.quizQAs ?? qaData.questions ?? [];
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3500);
           const personalizeRes = await fetch("http://localhost:5000/api/personalize/content", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
             body: JSON.stringify({
               userId: userId || undefined,
               email: userEmail || undefined,
@@ -126,12 +122,13 @@ function ContentView() {
               quizQAs: Array.isArray(quizQAs) ? quizQAs : [],
             }),
           });
-          clearTimeout(timeoutId);
           if (personalizeRes.ok) {
             const p = await personalizeRes.json();
             if (typeof p.content === "string" && p.content.trim()) finalContent = p.content;
           }
-        } catch {}
+        } catch (e) {
+          console.error("[Personalize] Failed, using base content:", e);
+        }
 
         await fetch("http://localhost:5000/api/user/subtopic/status", {
           method: "POST",
@@ -146,6 +143,7 @@ function ContentView() {
             content: finalContent,
           }),
         }).catch(() => {});
+        window.dispatchEvent(new Event("teachus:progress-updated"));
 
         setState({
           title: data.title,

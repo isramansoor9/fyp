@@ -3,6 +3,17 @@
 import { motion } from "framer-motion";
 
 const sparks = Array.from({ length: 6 });
+const sparkConfigs = sparks.map((_, i) => {
+  const spread = i - 2.5;
+  return {
+    x1: spread * 28,
+    x2: spread * 42,
+    y1: -90 - i * 14,
+    y2: -170 - i * 10,
+    scale: 1.4 + i * 0.12,
+    duration: 1.8 + i * 0.12,
+  };
+});
 
 export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
   return (
@@ -28,13 +39,13 @@ export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
             scale: 0,
           }}
           animate={{
-            x: [0, (Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300],
-            y: [0, -80 - Math.random() * 120, -160 - Math.random() * 100],
+            x: [0, sparkConfigs[i].x1, sparkConfigs[i].x2],
+            y: [0, sparkConfigs[i].y1, sparkConfigs[i].y2],
             opacity: [0, 1, 0],
-            scale: [0, 1.5 + Math.random(), 0],
+            scale: [0, sparkConfigs[i].scale, 0],
           }}
           transition={{
-            duration: 1.8 + Math.random() * 0.8,
+            duration: sparkConfigs[i].duration,
             repeat: Infinity,
             delay: i * 0.3,
             ease: "easeOut",

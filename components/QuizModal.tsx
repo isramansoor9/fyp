@@ -105,6 +105,7 @@ export default function QuizModal({
           ...(typeof data.level === "string" ? { level: data.level } : {}),
         });
       }
+      window.dispatchEvent(new Event("teachus:progress-updated"));
       setStep("done");
       if (onCompleted) {
         onCompleted({

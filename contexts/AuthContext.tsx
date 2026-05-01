@@ -28,6 +28,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const STORAGE_KEY = "teachus_user";
+const AUTH_SYNC_EVENT = "teachus:auth-sync";
 
 function readStoredUser(): AuthUser | null {
   if (typeof window === "undefined") return null;
@@ -44,10 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const syncFromStorage = useCallback(() => {
     setUserState(readStoredUser());
-    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    syncFromStorage();
+    setIsLoading(false);
+  }, [syncFromStorage]);
 
   const setUser = useCallback((u: AuthUser | null) => {
     if (u) {
@@ -56,12 +61,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(STORAGE_KEY);
     }
     setUserState(u);
+    window.dispatchEvent(new Event(AUTH_SYNC_EVENT));
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setUserState(null);
+    window.dispatchEvent(new Event(AUTH_SYNC_EVENT));
   }, []);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) syncFromStorage();
+    };
+    const onAuthSync = () => syncFromStorage();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") syncFromStorage();
+    };
+    const onFocus = () => syncFromStorage();
+    const onPageShow = () => syncFromStorage();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(AUTH_SYNC_EVENT, onAuthSync);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(AUTH_SYNC_EVENT, onAuthSync);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [syncFromStorage]);
 
   const value: AuthContextValue = {
     user,

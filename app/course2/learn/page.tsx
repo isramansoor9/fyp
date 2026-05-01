@@ -270,14 +270,14 @@ function buildFlatList(data: TocData) {
 export default function Course2LearnPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [studiedSet, setStudiedSet] = useState<Set<string>>(new Set());
+  const [completedContentSet, setCompletedContentSet] = useState<Set<string>>(new Set());
   const flatSubtopics = useMemo(() => buildFlatList(toc), []);
   const lastCompletedIndex = useMemo(() => {
     const studiedIndices = flatSubtopics
-      .filter((f) => studiedSet.has(f.title))
+      .filter((f) => completedContentSet.has(f.title))
       .map((f) => f.globalIndex);
-    return studiedIndices.length ? Math.max(...studiedIndices) : 0;
-  }, [flatSubtopics, studiedSet]);
+    return studiedIndices.length ? Math.max(...studiedIndices) : -1;
+  }, [flatSubtopics, completedContentSet]);
   const maxUnlockedIndex = lastCompletedIndex + 1;
 
   useEffect(() => {
@@ -302,18 +302,44 @@ export default function Course2LearnPage() {
   useEffect(() => {
     const u = user as { userId?: string; email?: string } | null;
     if (!u?.userId && !u?.email) return;
-    fetch("http://localhost:5000/api/user/course-progress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: u?.userId,
-        email: u?.email,
-        course: "Course 2",
-      }),
-    })
-      .then((r) => (r.ok ? r.json() : Promise.resolve({ studiedSubtopics: [] })))
-      .then((d: { studiedSubtopics?: string[] }) => setStudiedSet(new Set(d.studiedSubtopics || [])))
-      .catch(() => {});
+    const refreshProgress = () => {
+      fetch("http://localhost:5000/api/user/course-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: u?.userId,
+          email: u?.email,
+          course: "Course 2",
+        }),
+      })
+        .then((r) => (r.ok ? r.json() : Promise.resolve({ subtopics: {} })))
+        .then((d: { subtopics?: Record<string, { hasContent?: boolean }> }) => {
+          const completed = Object.entries(d.subtopics || {})
+            .filter(([, meta]) => Boolean(meta?.hasContent))
+            .map(([subtopic]) => subtopic);
+          setCompletedContentSet(new Set(completed));
+        })
+        .catch(() => {});
+    };
+    refreshProgress();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refreshProgress();
+    };
+    const onFocus = () => refreshProgress();
+    const onPageShow = () => refreshProgress();
+    const onProgressSync = () => refreshProgress();
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("teachus:progress-updated", onProgressSync);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("teachus:progress-updated", onProgressSync);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [user]);
 
   const [openPracticalTopics, setOpenPracticalTopics] = useState<Record<string, boolean>>(() => {
@@ -345,7 +371,7 @@ export default function Course2LearnPage() {
       );
       if (!flat) return null;
       const label = section === "practical" ? `P${topic.id}.${index + 1}` : `${topic.id}.${index + 1}`;
-      const isStudied = studiedSet.has(sub.title);
+      const isStudied = completedContentSet.has(sub.title);
       const isLocked = !isStudied && flat.globalIndex > maxUnlockedIndex;
       return (
         <li key={sub.id}>

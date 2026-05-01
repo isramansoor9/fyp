@@ -3,6 +3,7 @@ import random
 import traceback
 from typing import Tuple
 from datetime import datetime, UTC
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -603,6 +604,50 @@ def _next_level_with_stability(current_level: str, target_level: str, recent_tar
   should_change = counts[strongest] >= 2 and strongest != current_level
   return (strongest if should_change else current_level), normalized_targets, should_change
 
+def _local_personalize_content(
+  topic_name: str,
+  base_content: str,
+  user_level: str,
+  previous_quiz_feedback: str,
+  last_topic_recap: str,
+) -> str:
+  """
+  Deterministic fallback personalization when Gemini is unavailable or blocked.
+  Ensures output is visibly adapted (not just raw base content).
+  """
+  level = _normalize_level(user_level)
+  heading = {
+    "easy": "Beginner-Friendly Personalized Notes",
+    "intermediate": "Intermediate Personalized Notes",
+    "advanced": "Advanced Personalized Notes",
+  }.get(level, "Personalized Notes")
+  focus = {
+    "easy": "Focus on core definitions, basic checks, and safe step-by-step practice.",
+    "intermediate": "Focus on diagnosis flow, cause-effect analysis, and practical interpretation.",
+    "advanced": "Focus on deeper analysis, optimization choices, and professional troubleshooting judgment.",
+  }.get(level, "")
+
+  weak_area = (previous_quiz_feedback or "").strip()
+  recap = (last_topic_recap or "").strip()
+  recap_line = f"- Previous topic recap: {recap}" if recap else "- Previous topic recap: Not available."
+  weak_line = f"- Weak areas to reinforce: {weak_area}" if weak_area else "- Weak areas to reinforce: General revision and applied understanding."
+
+  return (
+    f"## {heading}\n\n"
+    f"### Topic: {topic_name}\n\n"
+    f"### Personalization Focus\n"
+    f"{focus}\n\n"
+    f"### Learning Context\n"
+    f"{recap_line}\n"
+    f"{weak_line}\n\n"
+    f"### Personalized Lesson\n"
+    f"{(base_content or '').strip()}\n\n"
+    f"### Practice Guidance\n"
+    f"- Review this topic once quickly, then explain it in your own words.\n"
+    f"- Solve one practical scenario and note where you were uncertain.\n"
+    f"- Revisit the weak area notes after practice for retention.\n"
+  ).strip()
+
 def _append_reference_resource_section(content: str, resources: list[dict]) -> str:
   """
   Append a compact reference/resource box at the end of generated content.
@@ -612,12 +657,6 @@ def _append_reference_resource_section(content: str, resources: list[dict]) -> s
   marker = "### Personalized Recommendation Resources"
   if marker in base:
     return base
-  if not resources:
-    one_liner = (
-      "References: You can refer to additional cosine-similarity matched resources in the recommendation panel."
-    )
-    return f"{base}\n\n{one_liner}".strip()
-
   lines = [
     "### Personalized Recommendation Resources",
     "These resources are recommended based on your current lesson and learning gaps using cosine-similarity semantic matching.",
@@ -630,10 +669,52 @@ def _append_reference_resource_section(content: str, resources: list[dict]) -> s
     label = topic if topic else f"Recommended Resource {i}"
     lines.append(f"- [{label}]({url}) - A focused reference to strengthen this subtopic.")
 
-  # Fall back to one line if no valid URLs made it through.
+  # Fall back gracefully when no URLs are available.
   if len(lines) <= 2:
-    lines.append("You can refer to the recommendation panel for additional cosine-similarity matched resources.")
+    lines.append("- [Review this lesson again](#) - No external references were available, so revise the personalized notes above.")
   return f"{base}\n\n" + "\n".join(lines)
+
+def _resources_from_rag_chunks(rag_chunks: list[dict], top_k: int = 5) -> list[dict]:
+  out: list[dict] = []
+  seen = set()
+  for c in rag_chunks or []:
+    url = str((c or {}).get("url", "")).strip()
+    topic = str((c or {}).get("topic", "")).strip()
+    if not url or url in seen:
+      continue
+    seen.add(url)
+    out.append({"url": url, "topic": topic})
+    if len(out) >= top_k:
+      break
+  return out
+
+def _resources_from_text_urls(text: str, top_k: int = 5) -> list[dict]:
+  out: list[dict] = []
+  seen = set()
+  for m in re.findall(r"https?://[^\s\)\]]+", text or ""):
+    url = m.strip().rstrip(".,;")
+    if not url or url in seen:
+      continue
+    seen.add(url)
+    out.append({"url": url, "topic": "Recommended resource"})
+    if len(out) >= top_k:
+      break
+  return out
+
+def _merge_resources(*sources: list[dict], top_k: int = 5) -> list[dict]:
+  merged: list[dict] = []
+  seen = set()
+  for src in sources:
+    for item in src or []:
+      url = str((item or {}).get("url", "")).strip()
+      topic = str((item or {}).get("topic", "")).strip()
+      if not url or url in seen:
+        continue
+      seen.add(url)
+      merged.append({"url": url, "topic": topic})
+      if len(merged) >= top_k:
+        return merged
+  return merged
 
 @app.route("/api/quiz/judge", methods=["POST"])
 def quiz_judge():
@@ -836,6 +917,29 @@ def personalize_content():
   if not last_topic_recap:
     last_topic_recap = user.get("lastTopicRecap") or ""
 
+  # Add previous-topic quiz answers context so personalization can connect
+  # new base content with recently attempted concepts.
+  try:
+    prev_subtopic = (user.get("lastSubTopicStudied") or "").strip()
+    if prev_subtopic:
+      prev_doc = user_subtopics.find_one({"userId": resolved_user_id, "course": course, "subtopic": prev_subtopic})
+      prev_quiz = (prev_doc or {}).get("quiz") if isinstance((prev_doc or {}).get("quiz"), dict) else {}
+      prev_questions = prev_quiz.get("questions", []) if isinstance(prev_quiz.get("questions", []), list) else []
+      prev_answers = prev_quiz.get("userAnswers", []) if isinstance(prev_quiz.get("userAnswers", []), list) else []
+      if prev_questions and prev_answers:
+        lines = []
+        for i, q in enumerate(prev_questions[:5]):
+          q_text = (q or {}).get("question") or (q or {}).get("Question") or ""
+          a_text = prev_answers[i] if i < len(prev_answers) else ""
+          if not q_text and not a_text:
+            continue
+          lines.append(f"{i+1}. Q: {q_text}\n   Student answer: {a_text}")
+        if lines:
+          extra = "Previous topic learner answers for personalization context:\n" + "\n".join(lines)
+          previous_quiz_feedback = ((previous_quiz_feedback + "\n\n" + extra).strip() if previous_quiz_feedback else extra)
+  except Exception as prev_quiz_err:
+    print(f"[Personalize] Previous quiz context enrichment skipped: {prev_quiz_err}")
+
   from gemini_service import personalize_content as gemini_personalize
   try:
     # RAG: query enhancement + hybrid retrieve + rerank
@@ -861,20 +965,45 @@ def personalize_content():
         + rag_context
       )
 
-    content = gemini_personalize(
-      topic_name=subtopic_name,
-      base_content=augmented_base,
-      quiz_qas=quiz_qas,
-      user_level=user_level,
-      previous_quiz_feedback=previous_quiz_feedback or None,
-      last_topic_recap=last_topic_recap or None,
-    )
+    # Let Gemini run with a generous timeout (2 minutes). If it exceeds this,
+    # we fall back to local personalization and still compute recommendations.
+    with ThreadPoolExecutor(max_workers=1) as executor:
+      future = executor.submit(
+        gemini_personalize,
+        topic_name=subtopic_name,
+        base_content=augmented_base,
+        quiz_qas=quiz_qas,
+        user_level=user_level,
+        previous_quiz_feedback=previous_quiz_feedback or None,
+        last_topic_recap=last_topic_recap or None,
+      )
+      try:
+        content = future.result(timeout=120)
+      except FuturesTimeoutError:
+        content = ""
+        print("[Personalize] Gemini timed out after 120s; switching to fallback personalization.")
+    if not isinstance(content, str) or not content.strip() or content.strip() == augmented_base.strip():
+      content = _local_personalize_content(
+        topic_name=subtopic_name,
+        base_content=base_content,
+        user_level=user_level,
+        previous_quiz_feedback=previous_quiz_feedback,
+        last_topic_recap=last_topic_recap,
+      )
+    rag_resources = _resources_from_rag_chunks(rag_chunks, top_k=5)
     recommended_resources = []
     try:
       from rag_pipeline import recommend_resources_from_content
       recommended_resources = recommend_resources_from_content(content, top_k=5)
     except Exception as rec_err:
       print(f"[RAG] Recommendation fallback due to error: {rec_err}")
+    recommended_resources = _merge_resources(
+      recommended_resources,
+      rag_resources,
+      _resources_from_text_urls(content, top_k=5),
+      _resources_from_text_urls(base_content, top_k=5),
+      top_k=5,
+    )
     content_with_resources = _append_reference_resource_section(content, recommended_resources)
 
     print(f"[Personalize] MISS -> generated {len(content_with_resources)} chars, storing in user_subtopics")
@@ -914,13 +1043,45 @@ def personalize_content():
       fallback_resources = recommend_resources_from_content(base_content, top_k=5)
     except Exception as rec_err:
       print(f"[RAG] Recommendation fallback failed in exception path: {rec_err}")
+    fallback_resources = _merge_resources(
+      fallback_resources,
+      _resources_from_rag_chunks(rag_chunks if isinstance(locals().get("rag_chunks"), list) else [], top_k=5),
+      _resources_from_text_urls(base_content, top_k=5),
+      top_k=5,
+    )
 
-    fallback_content = _append_reference_resource_section(base_content, fallback_resources)
+    fallback_core = _local_personalize_content(
+      topic_name=subtopic_name,
+      base_content=base_content,
+      user_level=user_level,
+      previous_quiz_feedback=previous_quiz_feedback,
+      last_topic_recap=last_topic_recap,
+    )
+    fallback_content = _append_reference_resource_section(fallback_core, fallback_resources)
+    now = datetime.utcnow()
+    user_subtopics.update_one(
+      {"userId": resolved_user_id, "course": course, "subtopic": subtopic_name},
+      {
+        "$set": {
+          "topic": body.get("topic", "").strip(),
+          "studied": bool((existing or {}).get("studied", False)),
+          "contentGenerated": True,
+          "content": fallback_content,
+          "recommendedResources": fallback_resources,
+          "lastViewedAt": now,
+        },
+        "$setOnInsert": {
+          "createdAt": now,
+          "quiz": {},
+        },
+      },
+      upsert=True,
+    )
     return jsonify({
       "content": fallback_content,
       "recommendedResources": fallback_resources,
       "cached": False,
-      "contentGenerated": False,
+      "contentGenerated": True,
       "personalizationFallback": True,
       "detail": str(e),
     }), 200

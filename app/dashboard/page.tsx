@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth, getDisplayName } from "@/contexts/AuthContext";
 import { User } from "lucide-react";
@@ -29,6 +30,7 @@ type User = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, setUser, isLoading: loading, logout } = useAuth();
   const userTyped = user as User | null;
   const [summary, setSummary] = useState<{
@@ -103,7 +105,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/";
+    router.replace("/");
   };
 
   const handleLanguageSwitch = async (nextLanguage: UILanguage) => {
