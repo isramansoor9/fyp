@@ -1,21 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { BookOpen, Clock, Calendar, Globe, TrendingUp, Target, CheckCircle, Award, BarChart, Brain, Zap, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Clock, Calendar, Globe, TrendingUp, BarChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EnrollModal from "@/components/EnrollModal";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
+import { LandingNavbar } from "@/app/components/LandingNavbar";
 
 const COURSE_NAME = "Course 2";
 const COURSE_LEARN_PATH = "/course2/learn";
 
+const FOUNDATION_BROWN = "#968e8a";
+
+const courseContentPanelClass =
+  "rounded-2xl border border-gray-200/70 bg-[#f4f3f2] overflow-hidden shadow-none";
+
 export default function Course2() {
   const router = useRouter();
   const { user, setUser } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
@@ -75,67 +79,100 @@ export default function Course2() {
     { no: 7, component: "Hybrid & Electric Vehicles", theory: 6, practical: 50, total: 56 },
   ];
 
-  const bloomsLevels = [
-    { level: "Remember", description: "Recall basic concepts and terminology", icon: <BookOpen className="w-8 h-8" /> },
-    { level: "Understand", description: "Explain ideas and concepts", icon: <Brain className="w-8 h-8" /> },
-    { level: "Apply", description: "Use knowledge in practical situations", icon: <CheckCircle className="w-8 h-8" /> },
-    { level: "Analyze", description: "Break down and examine components", icon: <BarChart className="w-8 h-8" /> },
-    { level: "Evaluate", description: "Justify decisions and troubleshoot", icon: <Target className="w-8 h-8" /> },
-    { level: "Create", description: "Design and build electrical systems", icon: <Zap className="w-8 h-8" /> },
+  const theorySum = courseModules.reduce((s, m) => s + m.theory, 0);
+  const practicalSum = courseModules.reduce((s, m) => s + m.practical, 0);
+  const totalSum = courseModules.reduce((s, m) => s + m.total, 0);
+
+  const skillProficiencyItems = [
+    {
+      en: "Use Auto Electrician workshop tools and equipment efficiently.",
+      ur: "آٹو الیکٹریشن ورکشاپ کے اوزار اور سامان مؤثر طریقے سے استعمال کر سکے۔",
+    },
+    {
+      en: "Perform simple auto electrician shop techniques as wiring up in series and parallel circuits, making tester, jumper wires, soldering, tapping, connecting thimble etc.",
+      ur: "سیریز اور پارلل سرکٹس میں وائرنگ، ٹیسٹر، جمپر وائر، سولڈنگ، ٹپنگ اور تھمبل کنیکشن وغیرہ جیسے سادہ ورکشاپ تکنیکیں انجام دے سکے۔",
+    },
+    {
+      en: "Perform maintenance, charging and testing of batteries.",
+      ur: "بیٹریوں کی دیکھ بھال، چارجنگ اور ٹیسٹنگ کر سکے۔",
+    },
+    {
+      en: "Diagnose and service self-starters.",
+      ur: "سیلف اسٹارٹرز کی تشخیص اور سروس کر سکے۔",
+    },
+    {
+      en: "Diagnose and service the charging system.",
+      ur: "چارجنگ سسٹم کی تشخیص اور سروس کر سکے۔",
+    },
+    {
+      en: "Interpret wiring diagrams of vehicles.",
+      ur: "گاڑیوں کی وائرنگ ڈائگرام سمجھ کر پڑھ سکے۔",
+    },
+    {
+      en: "Wire up the electrical circuits.",
+      ur: "برقی سرکٹس وائر اپ کر سکے۔",
+    },
+    {
+      en: "Apply the diagnostic flowchart diagram properly.",
+      ur: "تشخیصی فلو چارٹ ڈائگرام درست انداز سے استعمال کر سکے۔",
+    },
+  ];
+
+  const knowledgeProficiencyItems = [
+    { en: "Basics of auto electrician.", ur: "آٹو الیکٹریشن کی بنیادیں۔" },
+    { en: "Usage of workshop tools.", ur: "ورکشاپ کے اوزار کا استعمال۔" },
+    { en: "Various electrical components, their location, operation, and function.", ur: "مختلف برقی اجزاء، ان کا مقام، طریقۂ کار اور فعل۔" },
+    { en: "Function and operation of battery.", ur: "بیٹری کا فعل اور طریقۂ کار۔" },
+    { en: "Construction and operation of self-starter.", ur: "سیلف اسٹارٹر کی تعمیر اور طریقۂ کار۔" },
+    { en: "Construction and operation of charging system.", ur: "چارجنگ سسٹم کی تعمیر اور طریقۂ کار۔" },
+    { en: "Construction and operation of ignition system.", ur: "اگنیشن سسٹم کی تعمیر اور طریقۂ کار۔" },
+    { en: "Different circuits applied in a car wiring.", ur: "کار وائرنگ میں استعمال ہونے والے مختلف سرکٹس۔" },
+    { en: "The operation of EFI electronics.", ur: "ای ایف آئی الیکٹرانکس کا طریقۂ کار۔" },
+    { en: "Air-conditioning system of vehicle.", ur: "گاڑی کا ائیر کنڈیشنگ سسٹم۔" },
+    { en: "Gasoline vehicle diagnosing through digital scanner.", ur: "ڈیجیٹل اسکینر کے ذریعے گیسولین گاڑی کی تشخیص۔" },
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <span className="text-xl font-bold">Teachus</span>
-          </div>
-          <Link href="/dashboard" className="w-full sm:w-auto text-center px-4 py-2 sm:px-6 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 inline-block">
-            {urdu ? "ڈیش بورڈ پر واپس جائیں" : "Back to Dashboard"}
-          </Link>
-        </div>
-      </nav>
-{/* Hero Section */}
-      <section className="px-4 py-10 sm:px-6 sm:py-12 max-w-7xl mx-auto text-gray-600">
+    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+      <LandingNavbar />
+
+      <section className="px-4 pt-8 pb-3 sm:px-6 sm:pt-10 sm:pb-3 max-w-7xl mx-auto text-gray-600">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-8 lg:p-12">
-            {/* Left Content */}
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 text-gray-900 leading-tight">
-                Automotive Electrical <br/><span className="text-[#968e8a]">Systems</span>
-                <span className="block text-gray-500 text-xl font-medium mt-2">{urdu ? "کورس 2 (6 ماہ کا دورانیہ)" : "Course 2 (6-Month Duration)"}</span>
+                Automotive Electrical <br />
+                <span className="text-[#968e8a]">Systems</span>
+                <span className="block text-gray-500 text-xl font-medium mt-2">
+                  {urdu ? "کورس 2 (6 ماہ کا دورانیہ)" : "Course 2 (6 Month Duration)"}
+                </span>
               </h1>
-              
+
               <p className="text-gray-600 text-lg leading-relaxed mb-8">
                 {urdu
-                  ? "آٹو الیکٹریکل سسٹمز میں بنیادی مہارت حاصل کریں۔ چھ ماہ کے دوران بیٹری، اگنیشن اور وائرنگ میں عملی تجربہ حاصل کریں اور ضروری ٹربل شوٹنگ سیکھیں۔"
-                  : "Equip yourself with foundational skills in automotive electrical systems. Over six months, gain hands-on experience with batteries, ignition, and wiring while learning essential troubleshooting. This curriculum bridges entry-level theory with real-world application."}
+                  ? "جدید گاڑیوں میں میکینیکل سے الیکٹرانکس اور کاربوریٹر سے فیول انجیکشن تک تبدیلی تیز ہو چکی ہے۔ یہ چھ ماہ کا پروگرام اُن تبدیلیوں کے ساتھ قدم ملا کر آپ کو خودکار برقی نظاموں میں عملی صلاحیت دیتا ہے۔"
+                  : "Modern vehicles evolve from mechanical to electronic systems from carburation to EFI and beyond. Across six months, this program aligns with industry demand for technicians who understand wiring, starting, charging, and diagnostics alongside hybrid-relevant fundamentals."}
               </p>
 
               <button
                 onClick={handleStartCourse}
                 disabled={enrolling}
-                className="w-full sm:w-auto bg-black text-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-semibold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 group shadow-lg shadow-black/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="bg-black text-white px-12 py-5 rounded-2xl font-bold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isEnrolledInThis ? (urdu ? "سیکھنا جاری رکھیں" : "Continue Learning") : (urdu ? "کورس شروع کریں" : "Start Course")}
-                <Zap className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {isEnrolledInThis
+                  ? (urdu ? "سیکھنا جاری رکھیں" : "Continue Learning")
+                  : (urdu ? "کورس شروع کریں" : "Start Course")}
               </button>
             </div>
 
-            {/* Right - Course Stats */}
             <div className="bg-[#f4f3f2] rounded-xl p-8 border border-[#c3bebb]/30">
-              <h3 className="text-2xl font-bold mb-6 text-gray-900 border-b border-[#c3bebb] pb-2">{urdu ? "کریکولم کی جھلک" : "Curriculum Salients"}</h3>
-              
+              <h3 className="text-2xl font-bold mb-6 text-gray-900">{urdu ? "کریکولم کی جھلک" : "Curriculum Salients"}</h3>
+
               <div className="space-y-4">
                 {[
                   { icon: <TrendingUp className="w-5 h-5" />, label: urdu ? "داخلہ لیول" : "Entry Level", val: urdu ? "مڈل" : "Middle" },
                   { icon: <Calendar className="w-5 h-5" />, label: urdu ? "کل دورانیہ" : "Total Duration", val: urdu ? "6 ماہ" : "6 Months" },
-                  { icon: <Globe className="w-5 h-5" />, label: urdu ? "زبانِ تدریس" : "Instruction Medium", val: "Urdu / English" }
+                  { icon: <Globe className="w-5 h-5" />, label: urdu ? "زبانِ تدریس" : "Instruction Medium", val: "Urdu / English" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border-l-4 border-[#c3bebb]">
                     <div className="flex items-center gap-3">
@@ -161,7 +198,7 @@ export default function Course2() {
                       <strong className="text-gray-900 text-base">30 Hrs</strong>
                     </div>
                   </div>
-                  <div className="ml-8 mt-2 text-xs text-gray-500 flex justify-between px-1">
+                  <div className="mt-3 ml-8 flex justify-between px-1 text-xs text-gray-500">
                     <span>{urdu ? "ہفتے میں 6 دن" : "6 Days a Week"}</span>
                     <span>{urdu ? "روزانہ 5 گھنٹے" : "5 Hours per Day"}</span>
                   </div>
@@ -183,386 +220,145 @@ export default function Course2() {
         </div>
       </section>
 
-      {/* Tabs Section */}
-      <section className="px-6 py-8 max-w-7xl mx-auto text-gray-600">
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-6 py-4 font-semibold transition-all duration-300 border-b-2 whitespace-nowrap ${
-                activeTab === "overview"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {urdu ? "کورس ماڈیولز" : "Course Modules"}
-            </button>
-            <button
-              onClick={() => setActiveTab("assessment")}
-              className={`px-6 py-4 font-semibold transition-all duration-300 border-b-2 whitespace-nowrap ${
-                activeTab === "assessment"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {urdu ? "اسیسمنٹ سسٹم" : "Assessment System"}
-            </button>
-            <button
-              onClick={() => setActiveTab("personalization")}
-              className={`px-6 py-4 font-semibold transition-all duration-300 border-b-2 whitespace-nowrap ${
-                activeTab === "personalization"
-                  ? "border-black text-black"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {urdu ? "ذاتی نوعیت کی تعلیم" : "Personalized Learning"}
-            </button>
+      <section className="px-6 py-3 max-w-7xl mx-auto">
+        <div className={courseContentPanelClass}>
+          <div className="p-7 md:p-9">
+            <h3 className="text-2xl font-bold text-gray-900 mb-5">{urdu ? "یہ کورس کیوں؟" : "What this course sets out to do"}</h3>
+            <div className="space-y-4 text-lg leading-relaxed text-gray-600">
+              {urdu ? (
+                <>
+                  <p>
+                    موٹر ٹیکنالوجی میخانیکی سے الیکٹرانکس اور اینالوگ سے ڈیجیٹل کی طرف تیزی سے بدل رہی ہے؛ کاربوریٹر سے برقی فیول انجیکٹر تک۔
+                    مسابقتی دباؤ اور زیادہ مؤثر گاڑیوں کی پیداوار برقی نظام مانگتی ہے جو نہ صرف مؤثر ہوں بلکہ زہریلے اخراج پر سخت کنٹرول کے مطابق بھی ہوں۔
+                  </p>
+                  <p>
+                    تربیت یافتہ آٹو الیکٹریشنز کی مانگ دن بدن بڑھ رہی ہے؛ سڑکوں پر گاڑیاں اور ہائبرڈ، جدید اگنیشن اور ڈرائیو اسسٹ پروگراموں جیسے ہائی ٹیک تبدیلیاں شامل ہیں۔
+                  </p>
+                  <p>
+                    مستقبل میں ایسے افراد درکار ہوں گے جو خرابیوں کی تشخیص کریں اور انہیں ٹھیک کریں۔ یہ نصاب سائنسی اصطلاحات، اصولوں، عمل، تعمیر اور نظاموں کے حصوں کی کارکردگی، مختلف اقسام اور ٹربل شوٹنگ کو اخلاقی اقدار کے ساتھ سمجھاتا ہے
+                    تاکہ فارغ التحصیل جاب مارکیٹ کی مانگ پوری کر سکیں۔
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    {`Today's automotive technology is rapidly changing from mechanical to electronics, from analogue to digital, and from carbureted to electronic fuel injection. Competitive pressures demand more efficient vehicle electronic systems that also meet strict emission controls.`}
+                  </p>
+                  <p>
+                    Demand for trained auto electricians rises as more vehicles populate the roads and hybrid vehicles, advanced electronic ignition, and numerous drive-assist programmes raise the technical bar.
+                  </p>
+                  <p>
+                    In future, qualified technicians capable of diagnosing problems and fixing them effectively will remain essential. This curriculum addresses scientific terminology, principles, function, construction, and operation versions, types,
+                    troubleshooting, and ethics equipping trainees to satisfy job-market demand.
+                  </p>
+                </>
+              )}
+            </div>
           </div>
+        </div>
+      </section>
 
-          {/* Tab Content */}
+      <section className="px-6 py-3 max-w-7xl mx-auto">
+        <div className={courseContentPanelClass}>
           <div className="p-8">
-            {/* Course Modules Tab */}
-            {activeTab === "overview" && (
-              <div>
-                <h2 className="text-3xl font-bold mb-6">{urdu ? "فہرستِ مضامین" : "Table of Contents"}</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="text-left p-4 font-semibold">Sr. No.</th>
-                        <th className="text-left p-4 font-semibold">Course Component</th>
-                        <th className="text-center p-4 font-semibold">Theory (Hours)</th>
-                        <th className="text-center p-4 font-semibold">Practical (Hours)</th>
-                        <th className="text-center p-4 font-semibold">Total (Hours)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {courseModules.map((module, index) => (
-                        <tr
-                          key={index}
-                          className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
-                        >
-                          <td className="p-4">{module.no}</td>
-                          <td className="p-4 font-medium">{module.component}</td>
-                          <td className="p-4 text-center">{module.theory}</td>
-                          <td className="p-4 text-center">{module.practical}</td>
-                          <td className="p-4 text-center font-semibold">{module.total}</td>
-                        </tr>
-                      ))}
-                      <tr className="bg-gray-50 font-bold">
-                        <td className="p-4" colSpan={2}>Total</td>
-                        <td className="p-4 text-center">36</td>
-                        <td className="p-4 text-center">324</td>
-                        <td className="p-4 text-center">360</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Assessment System Tab */}
-            {activeTab === "assessment" && (
-              <div>
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold mb-4">{urdu ? "ذہین اسیسمنٹ سسٹم" : "Intelligent Assessment System"}</h2>
-                <p className="text-black text-lg">
-                Our AI-powered assessment system uses Enhanced Bloom's Taxonomy to evaluate and adapt to your learning progress in real-time.
-                </p>
-              </div>
-
-              {/* Bloom's Taxonomy Levels */}
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold mb-6">Enhanced Bloom's Taxonomy Levels</h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {bloomsLevels.map((item, index) => (
-                  <div
-                  key={index}
-                  className="p-6 bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-                  >
-                  <div className="text-4xl mb-3">{item.icon}</div>
-                  <h4 className="text-xl font-bold mb-2">{item.level}</h4>
-                  <p className="text-black">{item.description}</p>
-                  </div>
-                ))}
-                </div>
-              </div>
-
-              {/* Adaptive Quiz System */}
-                <div className="bg-gradient-to-br from-[#c3bebb] to-gray-100 text-gray-900 rounded-2xl p-8 mb-8 border border-gray-300">
-                  <div className="flex items-center gap-3 mb-6">
-                  <Brain className="w-8 h-8 text-[#c3bebb]" />
-                  <h3 className="text-2xl font-bold text-gray-900">Adaptive Quiz System</h3>
-                  </div>
-
-                  <div className="space-y-6">
-                  <div className="bg-[#c3bebb]   backdrop-blur-sm rounded-xl p-6">
-                  <h4 className="text-xl font-semibold mb-3 flex items-center gap-2 text-gray-900">
-                  <CheckCircle className="w-5 h-5 text-[#c3bebb]" />
-                  Progress Monitoring Through Quizzes
-                  </h4>
-                  <p className="text-gray-700 leading-relaxed">
-                  Your progress is continuously monitored through adaptive quizzes that adjust difficulty based on your performance. Each quiz evaluates your understanding across all six levels of Enhanced Bloom's Taxonomy.
-                  </p>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-[#c3bebb] border border-[#c3bebb] rounded-xl p-6 hover:shadow-md transition-shadow">
-                  <h5 className="font-bold text-lg mb-2 flex items-center gap-2 text-gray-900">
-                    <span className="text-2xl">✓</span> Easy Level
-                  </h5>
-                  <p className="text-sm text-gray-700">
-                    Focuses on <strong>Remember</strong> and <strong>Understand</strong> levels. Tests basic knowledge and comprehension.
-                  </p>
-                  </div>
-
-                  <div className="bg-[#c3bebb] border border-[#c3bebb] rounded-xl p-6 hover:shadow-md transition-shadow">
-                  <h5 className="font-bold text-lg mb-2 flex items-center gap-2 text-gray-900">
-                    <span className="text-2xl">◆</span> Medium Level
-                  </h5>
-                  <p className="text-sm text-gray-700">
-                    Emphasizes <strong>Apply</strong> and <strong>Analyze</strong> levels. Evaluates practical application and problem-solving.
-                  </p>
-                  </div>
-
-                  <div className="bg-[#c3bebb] border border-[#c3bebb] rounded-xl p-6 hover:shadow-md transition-shadow">
-                  <h5 className="font-bold text-lg mb-2 flex items-center gap-2 text-gray-900">
-                    <span className="text-2xl">★</span> Hard Level
-                  </h5>
-                  <p className="text-sm text-gray-700">
-                    Targets <strong>Evaluate</strong> and <strong>Create</strong> levels. Challenges advanced critical thinking and innovation.
-                  </p>
-                  </div>
-                  </div>
-                  </div>
-                </div>
-
-              {/* How It Works */}
-              <div className="bg-gray-50 rounded-xl p-8 text-gray-600">
-                <h3 className="text-2xl text-black font-bold mb-6">How the System Works</h3>
-                <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold">
-                  1
-                  </div>
-                  <div>
-                  <h4 className="font-bold text-black text-lg mb-2">Initial Assessment</h4>
-                  <p className="text-black">
-                    Begin with a diagnostic quiz to establish your baseline understanding across all Bloom's Taxonomy levels.
-                  </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-12 h-12  bg-black text-white rounded-full flex items-center justify-center font-bold">
-                  2
-                  </div>
-                  <div>
-                  <h4 className="font-bold  text-black text-lg mb-2">Adaptive Difficulty</h4>
-                  <p className="text-black">
-                    Based on your answers, the system automatically adjusts question difficulty (easy, medium, hard) to match your learning level.
-                  </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold">
-                  3
-                  </div>
-                  <div>
-                  <h4 className="font-bold text-black text-lg mb-2">Continuous Evaluation</h4>
-                  <p className="text-black">
-                    Regular quizzes throughout each module track your progress and identify areas requiring additional focus.
-                  </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-black text-white rounded-full flex items-center justify-center font-bold">
-                  4
-                  </div>
-                  <div>
-                  <h4 className="font-bold text-black text-lg mb-2">Intelligent Feedback</h4>
-                  <p className="text-black">
-                    Receive detailed explanations and recommendations based on your performance, guiding you toward mastery.
-                  </p>
-                  </div>
-                </div>
-                </div>
-              </div>
-              </div>
-            )}
-
-            {/* Personalized Learning Tab */}
-            {activeTab === "personalization" && (
-              <div>
-                <div className="mb-8">
-                  <h2 className="text-3xl font-bold mb-4">{urdu ? "ذاتی نوعیت کا تعلیمی تجربہ" : "Personalized Learning Experience"}</h2>
-                  <p className="text-gray-600 text-lg">
-                    Every learner is unique. Our AI-powered system personalizes each subtopic within the course modules based on your individual performance and learning style.
-                  </p>
-                </div>
-
-                {/* Personalization Features */}
-                <div className="grid md:grid-cols-2 gap-6 mb-12">
-                  <div className="bg-gradient-to-br from-blue-50 to-white border border-blue-100 rounded-xl p-8 hover:shadow-xl transition-all duration-300">
-                    <div className="w-14 h-14 bg-black rounded-xl flex items-center justify-center mb-4">
-                      <Brain className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">AI-Driven Content Adaptation</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      The system analyzes your quiz responses across all Bloom's Taxonomy levels and automatically adjusts the complexity, examples, and explanations for each subtopic to match your comprehension level.
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-xl p-8 hover:shadow-xl transition-all duration-300">
-                    <div className="w-14 h-14 bg-black rounded-xl flex items-center justify-center mb-4">
-                      <Target className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Targeted Subtopic Focus</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      If you struggle with specific subtopics (e.g., "Battery Charging" within the Battery module), the system provides additional resources, simplified explanations, and practice questions tailored to strengthen that area.
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-xl p-8 hover:shadow-xl transition-all duration-300">
-                    <div className="w-14 h-14 bg-black rounded-xl flex items-center justify-center mb-4">
-                      <TrendingUp className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Progressive Difficulty Scaling</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      As you demonstrate mastery in easier questions, the system gradually introduces more challenging content, ensuring you're always learning at the optimal difficulty level for growth.
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-xl p-8 hover:shadow-xl transition-all duration-300">
-                    <div className="w-14 h-14 bg-black rounded-xl flex items-center justify-center mb-4">
-                      <Users className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-3">Multilingual Personalization</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Content is personalized not just by difficulty but also by your preferred language (Urdu or English), ensuring maximum comprehension and comfort during learning.
-                    </p>
-                  </div>
-                </div>
-
-                {/* How Personalization Works */}
-                <div className="bg-gradient-to-r from-[#c3bebb] to-[#cbbfb7] text-gray-900 rounded-2xl p-8 mb-8 border border-gray-300">
-                  <h3 className="text-2xl font-bold mb-6 text-gray-900">How Subtopic Personalization Works</h3>
-
-                  <div className="space-y-6">
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200">
-                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-gray-900">
-                    <span className="text-2xl">📊</span> Performance Analysis
-                    </h4>
-                    <p className="text-gray-700 leading-relaxed">
-                    After each quiz, the AI analyzes your answers to identify:
-                    </p>
-                    <ul className="mt-3 ml-6 space-y-2 text-gray-700">
-                    <li>• Which subtopics you excel in</li>
-                    <li>• Which Bloom's Taxonomy levels need reinforcement</li>
-                    <li>• Your learning pace and preferred content format</li>
-                    <li>• Common misconceptions or knowledge gaps</li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200">
-                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-gray-900">
-                    <span className="text-2xl">🎯</span> Dynamic Content Generation
-                    </h4>
-                    <p className="text-gray-700 leading-relaxed">
-                    For each course component (Battery, Starting System, etc.), subtopics are dynamically personalized:
-                    </p>
-                    <div className="mt-4 space-y-3">
-                    <div className="bg-gray-200/50 rounded-lg p-4">
-                      <p className="font-semibold mb-1 text-gray-900">If you score well (Easy → Medium)</p>
-                      <p className="text-sm text-gray-700">Content advances to more complex applications and analysis</p>
-                    </div>
-                    <div className="bg-gray-200/50 rounded-lg p-4">
-                      <p className="font-semibold mb-1 text-gray-900">If you struggle (Medium → Easy)</p>
-                      <p className="text-sm text-gray-700">System provides foundational reviews with more examples</p>
-                    </div>
-                    <div className="bg-gray-200/50 rounded-lg p-4">
-                      <p className="font-semibold mb-1 text-gray-900">If you master concepts (Medium → Hard)</p>
-                      <p className="text-sm text-gray-700">Advanced challenges and real-world problem-solving scenarios</p>
-                    </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200">
-                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-gray-900">
-                    <span className="text-2xl">🔄</span> Continuous Adaptation
-                    </h4>
-                    <p className="text-gray-700 leading-relaxed">
-                    The personalization engine continuously learns from your interactions, updating your learning path in real-time. As you progress through modules, your personalized profile becomes more accurate, delivering increasingly relevant content.
-                    </p>
-                  </div>
-                  </div>
-                </div>
-
-
-                {/* Example Scenario */}
-                <div className="bg-linear-to-br from-black-50 to-black-100 rounded-xl p-8">
-                  <h3 className="text-2xl font-bold mb-4">{urdu ? "مثال: ذاتی نوعیت کا تعلیمی سفر" : "Example: Personalized Learning Journey"}</h3>
-                  <div className="space-y-4">
-                    <div className="flex gap-4 items-start">
-                      <div className="shrink-0 w-10 h-10 bg-black text-white rounded-full flex items-center justify-center font-bold text-sm">
-                        M1
-                      </div>
-                      <div>
-                        <h4 className="font-bold mb-1">Module: Battery System</h4>
-                        <p className="text-gray-600 text-sm">
-                          <strong>Subtopics:</strong> Battery Types, Charging Methods, Maintenance, Troubleshooting
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="ml-14 space-y-3 border-l-2 border-gray-300 pl-6">
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <p className="text-sm font-semibold mb-1">Quiz Result: 85% on Battery Types (Easy)</p>
-                        <p className="text-xs text-gray-600">✅ System Action: Advance to Medium difficulty for this subtopic</p>
-                      </div>
-
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <p className="text-sm font-semibold mb-1">Quiz Result: 60% on Charging Methods (Medium)</p>
-                        <p className="text-xs text-gray-600">⚠️ System Action: Provide additional Easy-level content with more examples</p>
-                      </div>
-
-                      <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <p className="text-sm font-semibold mb-1">Next Quiz: Personalized Mix</p>
-                        <p className="text-xs text-gray-600">🎯 Battery Types (Medium), Charging Methods (Easy with scaffolding)</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">{urdu ? "فہرستِ مضامین" : "Table of Contents"}</h2>
+            <div className="overflow-x-auto rounded-xl bg-[#ebe8e6]">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ backgroundColor: FOUNDATION_BROWN }}>
+                    <th className="text-left px-4 py-3 text-base font-bold text-white">Sr. No.</th>
+                    <th className="text-left px-4 py-3 text-base font-bold text-white">Course Component</th>
+                    <th className="text-center px-4 py-3 text-base font-bold text-white">Theory (Hrs)</th>
+                    <th className="text-center px-4 py-3 text-base font-bold text-white">Practical (Hrs)</th>
+                    <th className="text-center px-4 py-3 text-base font-bold text-white">Total (Hrs)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courseModules.map((module, index) => (
+                    <tr
+                      key={index}
+                      className={`border-b border-gray-300/40 last:border-b-0 ${index % 2 === 0 ? "bg-[#f5f4f3]" : "bg-[#e8e4e2]"}`}
+                    >
+                      <td className="px-4 py-3 text-[#5c5755]">{module.no}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{module.component}</td>
+                      <td className="px-4 py-3 text-center text-[#5c5755]">{module.theory}</td>
+                      <td className="px-4 py-3 text-center text-[#5c5755]">{module.practical}</td>
+                      <td className="px-4 py-3 text-center font-semibold text-gray-900">{module.total}</td>
+                    </tr>
+                  ))}
+                  <tr className="border-t border-gray-400/45 bg-[#d4cfcc] font-bold">
+                    <td className="px-4 py-3 text-[#2d2a28]" colSpan={2}>
+                      Total
+                    </td>
+                    <td className="px-4 py-3 text-center text-[#2d2a28]">{theorySum}</td>
+                    <td className="px-4 py-3 text-center text-[#2d2a28]">{practicalSum}</td>
+                    <td className="px-4 py-3 text-center text-[#2d2a28]">{totalSum}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="px-6 py-16 max-w-7xl mx-auto ">
-         <div className="bg-[#c3bebb] text-black rounded-3xl p-12 text-center shadow-2xl shadow-[#c3bebb]/40 relative overflow-hidden">
-           <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-           <Award className="w-16 h-16 mx-auto mb-6 opacity-80" />
-          <h2 className="text-4xl font-bold mb-4">{urdu ? "اپنا ٹیکنیکل کیریئر شروع کریں" : "Start Your Technical Career"}</h2>
-           <p className="text-lg mb-8 max-w-2xl mx-auto font-medium opacity-80">
-             {urdu ? "جدید آٹوموٹیو دنیا کے لیے بنے کورس میں شامل ہوں۔ 80% عملی تربیت اور 100% توجہ آپ کی کامیابی پر۔" : "Join the course designed for the modern automotive world. 80% practical training, 100% focused on your success."}
-           </p>
-           <button className="bg-black text-white px-12 py-5 rounded-2xl font-bold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 shadow-xl">
-             {urdu ? "آج ہی داخلہ لیں" : "Enroll in Course 2 Today"}
-           </button>
-         </div>
+      <section className="px-6 py-3 max-w-7xl mx-auto">
+        <div className={courseContentPanelClass}>
+          <div className="p-8">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">{urdu ? "مہارتی اہلیت کی تفصیلات" : "Skill proficiency details"}</h2>
+            <p className="text-lg font-medium text-gray-800 mb-6">
+              {urdu
+                ? "اس کورس کی کامیاب تکمیل پر، تربیت حاصل کرنے والا درج ذیل کر سکنا چاہیے:"
+                : "On successful completion of this course, the trainee should be able to:"}
+            </p>
+            <ol className="list-decimal list-outside pl-6 space-y-3 text-lg leading-relaxed text-gray-600">
+              {skillProficiencyItems.map((item, index) => (
+                <li key={index} className="pl-1">
+                  {urdu ? item.ur : item.en}
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white px-6 py-12" style={{ backgroundColor: "#c3bebb" }}>
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-black-400">© 2025-26 Teachus. All rights reserved.</p>
+      <section className="px-6 py-3 max-w-7xl mx-auto">
+        <div className={courseContentPanelClass}>
+          <div className="p-8">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">{urdu ? "علمی اہلیت کی تفصیلات" : "Knowledge proficiency details"}</h2>
+            <p className="text-lg font-medium text-gray-800 mb-6">
+              {urdu
+                ? "اس کورس کی کامیاب تکمیل پر، تربیت حاصل کرنے والا درج ذیل کر سکنا چاہیے:"
+                : "On successful completion of this course, the trainee should be able to:"}
+            </p>
+            <ol className="list-decimal list-outside pl-6 space-y-3 text-lg leading-relaxed text-gray-600">
+              {knowledgeProficiencyItems.map((item, index) => (
+                <li key={index} className="pl-1">
+                  {urdu ? item.ur : item.en}
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
-      </footer>
+      </section>
+
+      <section className="px-6 py-16 max-w-7xl mx-auto ">
+        <div className="bg-[#c3bebb] text-black rounded-3xl p-12 text-center shadow-2xl shadow-[#c3bebb]/40 relative overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+          <h2 className="text-4xl font-bold mb-4">{urdu ? "اپنا ٹیکنیکل کیریئر شروع کریں" : "Start Your Technical Career"}</h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto font-medium opacity-80">
+            {urdu
+              ? "جدید آٹوموٹیو دنیا کے لیے بنے کورس میں شامل ہوں۔ عملی اور نظری تعلیم آپ کی کامیابی پر مرکوز ہے۔"
+              : "Join the course designed for the modern automotive world. Practical and theory training focused on your success."}
+          </p>
+          <button
+            onClick={handleStartCourse}
+            disabled={enrolling}
+            className="bg-white text-black px-12 py-5 rounded-2xl font-bold border border-gray-200 shadow-xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {urdu ? "آج ہی داخلہ لیں" : "Enroll in Course 2 Today"}
+          </button>
+        </div>
+      </section>
 
       <EnrollModal
         isOpen={showEnrollModal}

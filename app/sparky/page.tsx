@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
-import { SiteNavbar } from "../components/SiteNavbar";
-import { User as UserIcon, SendHorizontal } from "lucide-react";
+import { LandingNavbar } from "@/app/components/LandingNavbar";
+import { SendHorizontal } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -95,21 +94,6 @@ export default function SparkyPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
-  const navbarRight = useMemo(
-    () => (
-      <Link
-        href="/dashboard"
-        className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
-      >
-        <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
-          <UserIcon className="w-4 h-4" />
-        </span>
-        <span className="max-w-[120px] truncate">{user?.email ?? ""}</span>
-      </Link>
-    ),
-    [user?.email]
-  );
-
   const send = async () => {
     const text = input.trim();
     if (!text || sending) return;
@@ -147,8 +131,11 @@ export default function SparkyPage() {
 
   if (isLoading) {
     return (
-      <div className={`min-h-screen bg-white flex items-center justify-center ${urdu ? urduFont.className : ""}`}>
-        <div className="text-gray-500 text-sm">{urdu ? "لوڈ ہو رہا ہے…" : "Loading…"}</div>
+      <div className={`min-h-screen flex flex-col bg-white ${urdu ? urduFont.className : ""}`}>
+        <LandingNavbar />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-gray-500 text-sm">{urdu ? "لوڈ ہو رہا ہے…" : "Loading…"}</div>
+        </div>
       </div>
     );
   }
@@ -159,8 +146,7 @@ export default function SparkyPage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-white via-gray-50 to-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      <SiteNavbar urdu={urdu} right={navbarRight} />
-
+      <LandingNavbar />
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:gap-8">
         <aside className="w-full shrink-0 lg:max-w-xs">
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

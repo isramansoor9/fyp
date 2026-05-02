@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, ChevronRight, Target, Lock } from "lucide-react";
+import { ChevronRight, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { LandingNavbar } from "@/app/components/LandingNavbar";
+import { isUrdu } from "@/lib/uiLanguage";
+import { urduFont } from "@/lib/urduFont";
 
 interface Subtopic {
   id: string;
@@ -271,9 +274,32 @@ function buildFlatList(data: TocData) {
   return list;
 }
 
+const FOUNDATION_BROWN = "#968e8a";
+const courseContentPanelClass =
+  "rounded-2xl border border-gray-200/70 bg-[#f4f3f2] overflow-hidden shadow-none";
+
+const curriculumBodyTextClass = "text-gray-600 text-lg leading-relaxed";
+
+/** Extra spacing between Ref. and Topic columns */
+const tableRefHeadClass =
+  "text-left pl-4 pr-8 sm:pr-10 py-3 text-base font-bold text-white whitespace-nowrap";
+const tableTopicHeadClass = "text-left pl-2 sm:pl-4 pr-4 py-3 text-base font-bold text-white";
+const tableRefCellClass =
+  "pl-4 pr-8 sm:pr-10 py-3 align-middle text-[#5c5755] w-20 shrink-0 tabular-nums";
+const tableTopicCellClass = "pl-2 sm:pl-4 pr-4 py-3 align-middle min-w-0";
+
+/** Expanded sub-rows under a main topic (smaller text + tighter rows than topic header rows) */
+const subtopicRefCellClass =
+  "pl-4 pr-6 sm:pr-8 py-1.5 align-top text-[#5c5755] shrink-0 tabular-nums text-xs font-mono font-semibold min-w-[4rem]";
+const subtopicTopicCellClass =
+  "pl-2 sm:pl-3 pr-3 py-1.5 align-top min-w-0";
+const subtopicLockCellClass =
+  "pl-2 pr-4 sm:pr-5 py-1.5 align-top text-right w-10 shrink-0";
+
 export default function Course2LearnPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
   const [completedContentSet, setCompletedContentSet] = useState<Set<string>>(new Set());
   const [progressLoading, setProgressLoading] = useState(true);
   const flatSubtopics = useMemo(() => buildFlatList(toc), []);
@@ -375,180 +401,174 @@ export default function Course2LearnPage() {
     setOpenTheoryTopics((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const renderSubtopicSkeleton = (count: number) =>
+  const renderSubtopicSkeletonRows = (count: number) =>
     Array.from({ length: count }).map((_, i) => (
-      <li key={i} className="flex items-center gap-2 px-2 py-1.5 rounded-md">
-        <div className="w-14 h-3 rounded bg-gray-200 animate-pulse shrink-0" />
-        <div className="flex-1 h-3 rounded bg-gray-200 animate-pulse" style={{ width: `${60 + (i % 4) * 10}%` }} />
-      </li>
+      <tr key={`sk-${i}`} className="border-b border-gray-300/35 bg-[#faf8f7]">
+        <td className={`${subtopicRefCellClass} w-24`}>
+          <div className="h-3 rounded bg-gray-200 animate-pulse w-12" />
+        </td>
+        <td className={`${subtopicTopicCellClass}`} colSpan={2}>
+          <div className="h-3 rounded bg-gray-200 animate-pulse max-w-xl" />
+        </td>
+      </tr>
     ));
 
-  const renderSubtopics = (topic: TopicGroup, section: "practical" | "theory") => {
-    if (progressLoading) return renderSubtopicSkeleton(topic.subtopics.length);
-    return topic.subtopics.map((sub, index) => {
+  const renderSubtopicTableRows = (topic: TopicGroup, section: "theory" | "practical") => {
+    if (progressLoading) return renderSubtopicSkeletonRows(topic.subtopics.length);
+    return topic.subtopics.flatMap((sub, index) => {
       const flat = flatSubtopics.find(
         (f) => f.id === sub.id && f.topicId === topic.id && f.section === section
       );
-      if (!flat) return null;
-      const label = section === "practical" ? `P${topic.id}.${index + 1}` : `${topic.id}.${index + 1}`;
+      if (!flat) return [];
+      const label = `${topic.id}.${index + 1}`;
       const isStudied = completedContentSet.has(normalizeProgressKey(sub.title));
       const isLocked = !isStudied && flat.globalIndex > maxUnlockedIndex;
-      return (
-        <li key={sub.id}>
-          <button
-            type="button"
-            onClick={() => {
-              if (isLocked) return;
-              router.push(`/course2/content?title=${encodeURIComponent(sub.title)}&topic=${encodeURIComponent(topic.title)}`);
-            }}
-            disabled={isLocked}
-            title={isLocked ? "Complete previous topics first" : undefined}
-            className={`w-full flex items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors ${
-              isLocked
-                ? "text-gray-400 cursor-not-allowed bg-gray-100/50"
-                : "text-gray-700 hover:bg-gray-100 cursor-pointer"
-            }`}
-          >
-            <span className="text-[10px] font-mono font-semibold text-gray-500 w-16">
-              {label}
-            </span>
-            <span className="flex-1 truncate">{sub.title}</span>
-            {isLocked && <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
-          </button>
-        </li>
-      );
+
+      return [
+        <tr key={sub.id} className="border-b border-gray-300/30 bg-[#faf8f7] hover:bg-[#f0ebe8]/90 transition-colors">
+          <td className={subtopicRefCellClass}>{label}</td>
+          <td className={subtopicTopicCellClass}>
+            <button
+              type="button"
+              onClick={() => {
+                if (isLocked) return;
+                router.push(
+                  `/course2/content?title=${encodeURIComponent(sub.title)}&topic=${encodeURIComponent(topic.title)}`
+                );
+              }}
+              disabled={isLocked}
+              title={isLocked ? "Complete previous topics first" : undefined}
+              className={`w-full text-left text-sm font-normal leading-snug rounded px-0.5 py-px -mx-0.5 transition-colors ${
+                isLocked
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-800 hover:bg-[#eae4e2]/70 cursor-pointer"
+              }`}
+            >
+              <span className="line-clamp-4">{sub.title}</span>
+            </button>
+          </td>
+          <td className={subtopicLockCellClass}>
+            {isLocked ? <Lock className="inline-block w-3.5 h-3.5 text-gray-400" aria-hidden /> : null}
+          </td>
+        </tr>,
+      ];
     });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Course 2</p>
-              <p className="text-sm font-bold text-gray-900">Auto Electrician Curriculum</p>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push("/course2")}
-            className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Back to Overview
-          </button>
-        </div>
-      </nav>
+    <div
+      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+    >
+      <LandingNavbar />
 
-      <header className="px-6 pt-12 pb-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-3">
-          <Target className="w-5 h-5 text-gray-700" />
-          <p className="text-xs font-bold tracking-[0.25em] uppercase text-gray-500">
-            Structured Learning Path
-          </p>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
-          Course 2 – Curriculum Explorer
+      <header className="px-6 pt-8 pb-10 sm:pb-12 max-w-7xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 text-gray-900 leading-tight">
+          Course 2 <span className="text-[#968e8a]">Curriculum Explorer</span>
         </h1>
-        <p className="text-gray-600 text-sm md:text-base max-w-2xl leading-relaxed">
+        <p className={`${curriculumBodyTextClass} max-w-3xl`}>
           Theory is listed first, then Practical, as per the course curriculum.
-          Expand a topic to see subtopics and click any subtopic to open its
-          content.
+          Expand a topic to see subtopics and click any subtopic to open its content.
         </p>
       </header>
 
-      <main className="px-6 pb-16 max-w-7xl mx-auto">
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 space-y-6">
-          <div className="flex items-center gap-2.5 mb-2">
-            <BookOpen className="w-5 h-5 text-gray-700" />
-            <h2 className="text-xl font-bold text-gray-900">Theory</h2>
-          </div>
-          <div className="space-y-4">
-            {toc.theoryTopics.map((topic) => {
-              const open = openTheoryTopics[topic.id];
-              return (
-                <div
-                  key={topic.id}
-                  className="border border-gray-200 rounded-xl bg-gray-50/80 overflow-hidden transition-shadow duration-300 hover:shadow-md"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleTheory(topic.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 md:px-5 md:py-4 bg-white hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 text-left">
-                      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">
-                        {topic.id}
-                      </span>
-                      <span className="text-sm md:text-base font-semibold text-gray-900">
-                        {topic.title}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-gray-400">
-                      {topic.subtopics.length} subtopics
-                    </span>
-                    <ChevronRight
-                      className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ${
-                        open ? "rotate-90" : ""
-                      }`}
-                    />
-                  </button>
-                  {open && (
-                    <ul className="px-3 pb-2 md:px-4 md:pb-3 space-y-1.5 pt-1 bg-gray-50 border-t border-gray-100">
-                      {renderSubtopics(topic, "theory")}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
+      <main className="px-6 pb-16 max-w-7xl mx-auto space-y-6">
+        <section className={courseContentPanelClass}>
+          <div className="p-4 md:p-5">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Theory</h2>
+            </div>
+            <div className="overflow-x-auto rounded-xl bg-[#ebe8e6]">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ backgroundColor: FOUNDATION_BROWN }}>
+                    <th className={tableRefHeadClass}>Ref.</th>
+                    <th className={tableTopicHeadClass}>Topic</th>
+                    <th className="text-right pl-2 pr-4 sm:pr-6 py-3 text-base font-bold text-white w-36 shrink-0">
+                      Lessons
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {toc.theoryTopics.map((topic, topicIdx) => {
+                    const open = openTheoryTopics[topic.id];
+                    const zebra = topicIdx % 2 === 0 ? "bg-[#f5f4f3]" : "bg-[#e8e4e2]";
+                    return (
+                      <Fragment key={topic.id}>
+                        <tr className={`border-b border-gray-300/40 ${zebra}`}>
+                          <td className={tableRefCellClass}>{topic.id}</td>
+                          <td className={tableTopicCellClass}>
+                            <button
+                              type="button"
+                              onClick={() => toggleTheory(topic.id)}
+                              className="w-full flex items-center gap-2 text-left font-medium text-gray-900 text-base hover:opacity-90 transition-opacity"
+                            >
+                              <ChevronRight
+                                className={`w-4 h-4 text-[#968e8a] shrink-0 transform transition-transform duration-300 ${open ? "rotate-90" : ""}`}
+                              />
+                              <span className="leading-snug">{topic.title}</span>
+                            </button>
+                          </td>
+                          <td className="pl-2 pr-4 sm:pr-6 py-3 align-middle text-right tabular-nums text-[#5c5755] shrink-0">
+                            {topic.subtopics.length} subtopics
+                          </td>
+                        </tr>
+                        {open && renderSubtopicTableRows(topic, "theory")}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-8 space-y-6 mt-8">
-          <div className="flex items-center gap-2.5 mb-2">
-            <BookOpen className="w-5 h-5 text-gray-700" />
-            <h2 className="text-xl font-bold text-gray-900">Practical</h2>
-          </div>
-          <div className="space-y-4">
-            {toc.practicalTopics.map((topic) => {
-              const open = openPracticalTopics[topic.id];
-              return (
-                <div
-                  key={topic.id}
-                  className="border border-gray-200 rounded-xl bg-gray-50/80 overflow-hidden transition-shadow duration-300 hover:shadow-md"
-                >
-                  <button
-                    type="button"
-                    onClick={() => togglePractical(topic.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 md:px-5 md:py-4 bg-white hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 text-left">
-                      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">
-                        {topic.id}
-                      </span>
-                      <span className="text-sm md:text-base font-semibold text-gray-900">
-                        {topic.title}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-gray-400">
-                      {topic.subtopics.length} subtopics
-                    </span>
-                    <ChevronRight
-                      className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ${
-                        open ? "rotate-90" : ""
-                      }`}
-                    />
-                  </button>
-                  {open && (
-                    <ul className="px-3 pb-2 md:px-4 md:pb-3 space-y-1.5 pt-1 bg-gray-50 border-t border-gray-100">
-                      {renderSubtopics(topic, "practical")}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
+        <section className={courseContentPanelClass}>
+          <div className="p-4 md:p-5">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Practical</h2>
+            </div>
+            <div className="overflow-x-auto rounded-xl bg-[#ebe8e6]">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ backgroundColor: FOUNDATION_BROWN }}>
+                    <th className={tableRefHeadClass}>Ref.</th>
+                    <th className={tableTopicHeadClass}>Topic</th>
+                    <th className="text-right pl-2 pr-4 sm:pr-6 py-3 text-base font-bold text-white w-36 shrink-0">
+                      Lessons
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {toc.practicalTopics.map((topic, topicIdx) => {
+                    const open = openPracticalTopics[topic.id];
+                    const zebra = topicIdx % 2 === 0 ? "bg-[#f5f4f3]" : "bg-[#e8e4e2]";
+                    return (
+                      <Fragment key={topic.id}>
+                        <tr className={`border-b border-gray-300/40 ${zebra}`}>
+                          <td className={tableRefCellClass}>{topic.id}</td>
+                          <td className={tableTopicCellClass}>
+                            <button
+                              type="button"
+                              onClick={() => togglePractical(topic.id)}
+                              className="w-full flex items-center gap-2 text-left font-medium text-gray-900 text-base hover:opacity-90 transition-opacity"
+                            >
+                              <ChevronRight
+                                className={`w-4 h-4 text-[#968e8a] shrink-0 transform transition-transform duration-300 ${open ? "rotate-90" : ""}`}
+                              />
+                              <span className="leading-snug">{topic.title}</span>
+                            </button>
+                          </td>
+                          <td className="pl-2 pr-4 sm:pr-6 py-3 align-middle text-right tabular-nums text-[#5c5755] shrink-0">
+                            {topic.subtopics.length} subtopics
+                          </td>
+                        </tr>
+                        {open && renderSubtopicTableRows(topic, "practical")}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </main>

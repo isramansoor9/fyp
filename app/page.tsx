@@ -3,12 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { useAuth, getDisplayName } from "@/contexts/AuthContext";
-import { User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
-import { DataCollectionChart } from "./components/DataCollectionChartMain";
-import { SiteNavbar } from "./components/SiteNavbar";
+import { DataCollectionChart } from "@/app/components/DataCollectionChartMain";
+import { LandingNavbar } from "@/app/components/LandingNavbar";
 import logoTevta from "./images/tevta.png";
 import logoNavttc from "./images/navttc.png";
 import logoDaad from "./images/daad.png";
@@ -17,7 +16,7 @@ import logoMachvis from "./images/machvis.png";
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const { user, isLoggedIn, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
 
   const faqs = [
@@ -50,31 +49,7 @@ export default function Home() {
 
   return (
     <div className={`min-h-screen bg-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      <SiteNavbar
-        urdu={urdu}
-        right={
-          !isLoading && isLoggedIn && user ? (
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
-            >
-              <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
-                <User className="w-4 h-4" />
-              </span>
-              <span className="max-w-[120px] truncate">{getDisplayName(user)}</span>
-            </Link>
-          ) : !isLoading ? (
-            <Link
-              href="/login"
-              className="bg-black text-white px-6 py-2 rounded text-sm font-medium transition-all duration-300 hover:bg-gray-800 transform hover:scale-105 hover:shadow-lg"
-            >
-              {urdu ? "لاگ اِن" : "Login"}
-            </Link>
-          ) : (
-            <div className="h-10 w-24 rounded bg-gray-100 animate-pulse" aria-hidden="true" />
-          )
-        }
-      />
+      <LandingNavbar />
 
       {/* Hero Section */}
       <section className="px-8 py-16 max-w-7xl mx-auto">

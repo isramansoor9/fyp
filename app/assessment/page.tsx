@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
-import { SiteNavbar } from "../components/SiteNavbar";
-import { User as UserIcon, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { LandingNavbar } from "@/app/components/LandingNavbar";
+import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -83,21 +83,6 @@ export default function AssessmentPage() {
     }
   }, [isLoggedIn, user, enrolled, fetchQuestions]);
 
-  const navbarRight = useMemo(
-    () => (
-      <Link
-        href="/dashboard"
-        className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
-      >
-        <span className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center">
-          <UserIcon className="w-4 h-4" />
-        </span>
-        <span className="max-w-[120px] truncate">{user?.email ?? ""}</span>
-      </Link>
-    ),
-    [user?.email]
-  );
-
   const submitJudge = async () => {
     if (!questions.length || grading) return;
     setGrading(true);
@@ -134,8 +119,11 @@ export default function AssessmentPage() {
 
   if (isLoading) {
     return (
-      <div className={`min-h-screen bg-white flex items-center justify-center ${urdu ? urduFont.className : ""}`}>
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      <div className={`min-h-screen flex flex-col bg-white ${urdu ? urduFont.className : ""}`}>
+        <LandingNavbar />
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
       </div>
     );
   }
@@ -145,7 +133,7 @@ export default function AssessmentPage() {
   if (!["Course 1", "Course 2", "Course 3"].includes(enrolled)) {
     return (
       <div className={`min-h-screen bg-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-        <SiteNavbar urdu={urdu} right={navbarRight} />
+        <LandingNavbar />
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
           <h1 className="text-2xl font-bold mb-4">{urdu ? "سب سے پہلے اندراج کریں" : "Enrollment required"}</h1>
           <p className="text-gray-600 mb-8">
@@ -161,8 +149,7 @@ export default function AssessmentPage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-white via-gray-50 to-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      <SiteNavbar urdu={urdu} right={navbarRight} />
-
+      <LandingNavbar />
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <header className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{urdu ? "خودکار اسیسمنٹ" : "Automated assessment"}</h1>

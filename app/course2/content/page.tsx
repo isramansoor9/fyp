@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { LandingNavbar } from "@/app/components/LandingNavbar";
 import ContentLoader from "@/components/ContentLoader";
 import QuizModal from "@/components/QuizModal";
 import PersonalizedContentRenderer from "@/components/PersonalizedContentRenderer";
@@ -203,25 +205,17 @@ function ContentView() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-b from-white to-gray-50 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
-      {/* Nav */}
-      <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <p className="text-sm font-bold text-gray-900">{urdu ? "کورس 2 · مواد" : "Course 2 · Easy Content"}</p>
-          </div>
-          <button
-            onClick={() => router.push("/course2/learn")}
-            className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+      <LandingNavbar
+        rightPrefix={
+          <Link
+            href="/course2/learn"
+            className="px-3 py-2 sm:px-4 text-sm font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
           >
             {urdu ? "نصاب پر واپس جائیں" : "Back to Curriculum"}
-          </button>
-        </div>
-      </nav>
+          </Link>
+        }
+      />
 
-      {/* Content */}
       <main className="max-w-4xl mx-auto px-6 py-10">
         <article className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-10">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">
