@@ -48,7 +48,9 @@ export default function Home() {
   ];
 
   return (
-    <div className={`min-h-screen bg-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+    >
       <LandingNavbar />
 
       {/* Hero Section */}
