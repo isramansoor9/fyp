@@ -26,15 +26,31 @@ GEMINI_AVAILABLE = bool(gemini_api_key)
 def _mark_gemini_unavailable(err: Exception) -> None:
   text = str(err or "").lower()
   if "permission_denied" in text or "api key was reported as leaked" in text or "403" in text:
-    # Keep Gemini enabled for subsequent requests; fallback is per-request.
-    # This avoids sticky "disabled" mode and always gives Gemini another chance.
     print("[Gemini] Permission/auth error encountered; using per-request fallback.")
 
 app = Flask(__name__)
 
-# Allow Next.js dev server by default; override with CORS_ORIGIN env for deploy
-cors_origin = os.getenv("CORS_ORIGIN", "http://localhost:3000")
-CORS(app, resources={r"/api/*": {"origins": cors_origin}}, supports_credentials=False)
+# CORS: comma-separated origins. Browsers send Origin without a trailing slash — strip slashes here.
+# Do NOT use resources={r"/api/*": ...}: in Python regex `*` only repeats `/`, so paths like
+# `/api/login` never match and preflight OPTIONS gets no Access-Control-Allow-Origin (failed to fetch).
+# Example Render env: CORS_ORIGIN=https://teachus-pk.vercel.app,http://localhost:3000
+_cors_raw = os.getenv("CORS_ORIGIN", "http://localhost:3000,http://127.0.0.1:3000")
+
+
+def _normalize_cors_origin(origin: str) -> str:
+  o = origin.strip()
+  return o[:-1] if o.endswith("/") else o
+
+
+cors_origins = [_normalize_cors_origin(o) for o in _cors_raw.split(",") if o.strip()]
+CORS(
+  app,
+  origins=cors_origins,
+  supports_credentials=False,
+  allow_headers=["Content-Type", "Authorization"],
+  methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+)
+print(f"[CORS] Allowed origins ({len(cors_origins)}): {cors_origins}")
 
 # MongoDB (configured in code per deployment — not read from environment)
 MONGO_URI = "mongodb+srv://abdullahmalhi361_db_user:EtKklr72IwZMLkNC@teachus1.pw2lfiw.mongodb.net/?appName=Teachus1"

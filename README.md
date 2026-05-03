@@ -32,6 +32,12 @@ Use the origin only (no trailing slash, no `/api` suffix). On [Vercel](https://v
 
 Restart the dev server after updating environment variables.
 
+### Deployed frontend (Vercel) + backend (Render)
+
+1. **Vercel** — set `NEXT_PUBLIC_API_URL` to your Render URL, e.g. `https://fyp-1xcl.onrender.com` (no trailing slash), then redeploy.
+2. **Render** — set `CORS_ORIGIN` to your live frontend origin(s), comma-separated, e.g. `https://teachus-pk.vercel.app,http://localhost:3000` (no trailing slash). If this is wrong, preflight fails with “No 'Access-Control-Allow-Origin' header”. After deploying the backend, check Render logs for the line `[CORS] Allowed origins (...)` to confirm the list parsed correctly.
+3. After changing Render env vars, trigger a manual deploy or restart so Gunicorn picks them up.
+
 ## Flask backend (API)
 
 The backend is a standalone Flask service that handles auth against MongoDB and is CORS-allowed for the Next.js frontend.
@@ -40,9 +46,9 @@ The backend is a standalone Flask service that handles auth against MongoDB and 
 ```
 MONGODB_URI="your-mongodb-connection-string"
 MONGODB_DB="teachus"
-# Frontend origin(s) for CORS — use your deployed Next URL in production, e.g.
-# CORS_ORIGIN="https://your-app.vercel.app"
-CORS_ORIGIN="http://localhost:3000"
+# CORS: comma-separated list of allowed frontend origins (required for Vercel + Render)
+# CORS_ORIGIN="https://teachus-pk.vercel.app,http://localhost:3000"
+CORS_ORIGIN="http://localhost:3000,http://127.0.0.1:3000"
 # Optional: PORT="5000"
 ```
 
