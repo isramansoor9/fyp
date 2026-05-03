@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -46,8 +47,14 @@ function readStoredUser(): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  /** Raw localStorage value last applied to `user`; avoids new object identity on focus/tab switch when nothing changed. */
+  const lastSyncedUserRawRef = useRef<string | null | undefined>(undefined);
 
   const syncFromStorage = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === lastSyncedUserRawRef.current) return;
+    lastSyncedUserRawRef.current = raw;
     setUserState(readStoredUser());
   }, []);
 
@@ -59,9 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setUser = useCallback((u: AuthUser | null) => {
     if (u) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+      const raw = JSON.stringify(u);
+      localStorage.setItem(STORAGE_KEY, raw);
+      lastSyncedUserRawRef.current = raw;
     } else {
       localStorage.removeItem(STORAGE_KEY);
+      lastSyncedUserRawRef.current = null;
     }
     setUserState(u);
     window.dispatchEvent(new Event(AUTH_SYNC_EVENT));
@@ -69,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    lastSyncedUserRawRef.current = null;
     setUserState(null);
     window.dispatchEvent(new Event(AUTH_SYNC_EVENT));
   }, []);

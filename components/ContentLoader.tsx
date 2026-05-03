@@ -59,9 +59,11 @@ const TIP_HOLD_SECONDS = 7.5;
 
 export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
   const n = BILINGUAL_TIPS.length;
-  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * BILINGUAL_TIPS.length));
+  // Fixed initial index so server HTML matches the client; randomize only after mount.
+  const [tipIndex, setTipIndex] = useState(0);
 
   useEffect(() => {
+    setTipIndex(Math.floor(Math.random() * n));
     const id = setInterval(
       () => setTipIndex((i) => (i + 1) % n),
       TIP_HOLD_SECONDS * 1000
