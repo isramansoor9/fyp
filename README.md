@@ -22,11 +22,13 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Environment variables (frontend)
 
-Create a `.env.local` file with your MongoDB connection string:
+Create a `.env.local` file (see `.env.example`). Point the Next.js app at your Flask API:
 
 ```
-NEXT_PUBLIC_API_BASE="http://localhost:5000/api"
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
 ```
+
+Use the origin only (no trailing slash, no `/api` suffix). On [Vercel](https://vercel.com), add the same variable under Project → Settings → Environment Variables.
 
 Restart the dev server after updating environment variables.
 
@@ -38,7 +40,8 @@ The backend is a standalone Flask service that handles auth against MongoDB and 
 ```
 MONGODB_URI="your-mongodb-connection-string"
 MONGODB_DB="teachus"
-# Frontend origin for CORS during dev
+# Frontend origin(s) for CORS — use your deployed Next URL in production, e.g.
+# CORS_ORIGIN="https://your-app.vercel.app"
 CORS_ORIGIN="http://localhost:3000"
 # Optional: PORT="5000"
 ```
@@ -52,7 +55,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The API will run on `http://localhost:5000/api` by default. The frontend calls this via `NEXT_PUBLIC_API_BASE`.
+The API serves routes under `/api/...`. The frontend builds URLs from `NEXT_PUBLIC_API_URL` (see `lib/backendUrl.ts`), defaulting to `http://localhost:5000` when unset.
 
 ## Learn More
 

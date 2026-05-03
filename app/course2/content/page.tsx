@@ -9,6 +9,7 @@ import ContentLoader from "@/components/ContentLoader";
 import QuizModal from "@/components/QuizModal";
 import PersonalizedContentRenderer from "@/components/PersonalizedContentRenderer";
 import { isUrdu } from "@/lib/uiLanguage";
+import { backendUrl } from "@/lib/backendUrl";
 import { urduFont } from "@/lib/urduFont";
 
 type ContentState = {
@@ -65,7 +66,7 @@ function ContentView() {
     (async () => {
       try {
         const subtopicRes = await fetch(
-          `http://localhost:5000/api/subtopic/${encodeURIComponent(titleParam)}?course=${encodeURIComponent("Course 2")}&userId=${encodeURIComponent(userId)}&email=${encodeURIComponent(userEmail)}`
+          `${backendUrl("/api/subtopic")}/${encodeURIComponent(titleParam)}?course=${encodeURIComponent("Course 2")}&userId=${encodeURIComponent(userId)}&email=${encodeURIComponent(userEmail)}`
         );
         if (subtopicRes.ok) {
           const subtopicData = await subtopicRes.json();
@@ -102,7 +103,7 @@ function ContentView() {
           const qaRes = await fetch(`/api/course2/quiz?title=${encodeURIComponent(titleParam)}&level=${userLevel}&all=true`);
           const qaData = await qaRes.json();
           const quizQAs = qaData.quizQAs ?? qaData.questions ?? [];
-          const personalizeRes = await fetch("http://localhost:5000/api/personalize/content", {
+          const personalizeRes = await fetch(backendUrl("/api/personalize/content"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -124,7 +125,7 @@ function ContentView() {
           console.error("[Personalize] Failed, using base content:", e);
         }
 
-        await fetch("http://localhost:5000/api/user/subtopic/status", {
+        await fetch(backendUrl("/api/user/subtopic/status"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

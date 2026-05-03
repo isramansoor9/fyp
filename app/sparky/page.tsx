@@ -9,7 +9,9 @@ import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { SendHorizontal } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+import { getBackendBaseUrl } from "@/lib/backendUrl";
+
+const API = getBackendBaseUrl();
 
 type SessionRow = {
   dateKey: string;

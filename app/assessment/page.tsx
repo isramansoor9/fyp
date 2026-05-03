@@ -8,8 +8,9 @@ import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
+import { getBackendBaseUrl } from "@/lib/backendUrl";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API = getBackendBaseUrl();
 
 type AQ = {
   question: string;

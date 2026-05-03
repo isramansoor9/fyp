@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, ChevronRight, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { backendUrl } from "@/lib/backendUrl";
 
 type QuizQuestion = { question: string; answer: string; difficulty: string };
 
@@ -79,7 +80,7 @@ export default function QuizModal({
     setStep("submitting");
     setError(null);
     try {
-      const res = await fetch("http://localhost:5000/api/quiz/submit", {
+      const res = await fetch(backendUrl("/api/quiz/submit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
