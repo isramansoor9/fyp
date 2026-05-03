@@ -16,7 +16,7 @@ export function LandingNavbar({ rightPrefix }: LandingNavbarProps) {
   const urdu = isUrdu((user as { preferredLanguage?: string } | null)?.preferredLanguage);
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-[#c3bebb] z-50 shadow-sm border-b border-black/10">
+    <nav className="flex items-center justify-between px-8 py-4 sticky top-0 bg-white/95 backdrop-blur-sm z-50 shadow-sm">
       <div className="flex items-center gap-10">
         <Link href="/" className="flex items-center gap-2 group cursor-pointer">
           <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
