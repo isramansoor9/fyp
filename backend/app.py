@@ -89,6 +89,14 @@ LEVEL_QUIZ_MIX_ASSESS = {
 def normalize_email(email: str) -> str:
   return email.strip().lower()
 
+
+def _wanted_content_language(user: dict | None) -> str:
+  """Match dashboard / login: 'urdu' -> Urdu lesson text; anything else -> English."""
+  if not user:
+    return "en"
+  pl = str(user.get("preferredLanguage") or "english").strip().lower()
+  return "ur" if pl == "urdu" else "en"
+
 def _subtopic_query(user_id: str, email: str, course: str, subtopic: str) -> dict:
   query = {"course": course, "subtopic": subtopic}
   if user_id:
@@ -474,6 +482,7 @@ def upsert_subtopic_status():
     if (not has_existing_content) or force_content_overwrite:
       set_fields["content"] = content
       set_fields["contentGenerated"] = True
+      set_fields["contentLanguage"] = _wanted_content_language(user)
     else:
       set_fields["contentGenerated"] = True
   else:
@@ -759,12 +768,49 @@ def _local_personalize_content(
   user_level: str,
   previous_quiz_feedback: str,
   last_topic_recap: str,
+  output_language: str = "en",
 ) -> str:
   """
   Deterministic fallback personalization when Gemini is unavailable or blocked.
   Ensures output is visibly adapted (not just raw base content).
   """
   level = _normalize_level(user_level)
+  lang = (output_language or "en").strip().lower()
+  if lang == "ur":
+    heading = {
+      "easy": "ذاتی نوٹس (آسان سطح)",
+      "intermediate": "ذاتی نوٹس (درمیانی سطح)",
+      "advanced": "ذاتی نوٹس (اعلیٰ سطح)",
+    }.get(level, "ذاتی نوٹس")
+    focus = {
+      "easy": "بنیادی اصطلاحات، حفاظتی چیک اور قدم بہ قدم مشق پر توجہ دیں۔",
+      "intermediate": "تشخیص کے مراحل، وجہ و اثر اور عملی تعبیر پر زور دیں۔",
+      "advanced": "گہرا تجزیہ، بہترین انتخاب اور پیشہ ورانہ مرمت کے فیصلے پر زور دیں۔",
+    }.get(level, "")
+    recap = (last_topic_recap or "").strip()
+    weak_area = (previous_quiz_feedback or "").strip()
+    recap_line = f"- پچھلے سبق کا خلاصہ: {recap}" if recap else "- پچھلے سبق کا خلاصہ: دستیاب نہیں۔"
+    weak_line = (
+      f"- کمزور پہلوؤں پر دوبارہ کام: {weak_area}"
+      if weak_area
+      else "- کمزور پہلوؤں پر دوبارہ کام: عمومی دہرائی اور عملی سمجھ۔"
+    )
+    return (
+      f"## {heading}\n\n"
+      f"### موضوع: {topic_name}\n\n"
+      f"### ذاتی تعلیم کا مرکز\n"
+      f"{focus}\n\n"
+      f"### سیکھنے کا سیاق\n"
+      f"{recap_line}\n"
+      f"{weak_line}\n\n"
+      f"### ذاتی سبق\n"
+      f"{(base_content or '').strip()}\n\n"
+      f"### مشق کی رہنمائی\n"
+      f"- پہلے اس سبق کو جلدی دوبارہ پڑھیں، پھر اپنے الفاظ میں سمجھائیں۔\n"
+      f"- ایک عملی منظرنامہ حل کریں اور جہاں الجھن ہو وہاں نوٹ کریں۔\n"
+      f"- مشق کے بعد کمزور پہلوؤں کے نوٹس دوبارہ دیکھیں تاکہ یاد رہے۔\n"
+    ).strip()
+
   heading = {
     "easy": "Beginner-Friendly Personalized Notes",
     "intermediate": "Intermediate Personalized Notes",
@@ -797,30 +843,39 @@ def _local_personalize_content(
     f"- Revisit the weak area notes after practice for retention.\n"
   ).strip()
 
-def _append_reference_resource_section(content: str, resources: list[dict]) -> str:
+def _append_reference_resource_section(content: str, resources: list[dict], output_language: str = "en") -> str:
   """
   Append a compact reference/resource box at the end of generated content.
   The resources are selected via embedding similarity (cosine-style semantic retrieval).
   """
   base = (content or "").rstrip()
-  marker = "### Personalized Recommendation Resources"
+  lang = (output_language or "en").strip().lower()
+  if lang == "ur":
+    marker = "### ذاتی تجویز کردہ وسائل"
+    intro = "یہ وسائل آپ کے موجودہ سبق اور سیکھنے کے خلا کی بنیاد پر تجویز کیے گئے ہیں (سیمینٹک مماثلت)۔"
+    suffix = "اس سب ٹاپک کو مضبوط بنانے کے لیے ایک مفید حوالہ۔"
+    no_refs = "- [اس سبق کو دوبارہ دیکھیں](#) - کوئی بیرونی حوالہ دستیاب نہیں تھا؛ اوپر والے ذاتی نوٹس دوبارہ پڑھیں۔"
+    default_label = "تجویز کردہ وسیلہ"
+  else:
+    marker = "### Personalized Recommendation Resources"
+    intro = "These resources are recommended based on your current lesson and learning gaps using cosine-similarity semantic matching."
+    suffix = "A focused reference to strengthen this subtopic."
+    no_refs = "- [Review this lesson again](#) - No external references were available, so revise the personalized notes above."
+    default_label = "Recommended resource"
   if marker in base:
     return base
-  lines = [
-    "### Personalized Recommendation Resources",
-    "These resources are recommended based on your current lesson and learning gaps using cosine-similarity semantic matching.",
-  ]
+  lines = [marker, intro]
   for i, item in enumerate(resources, start=1):
     url = (item or {}).get("url", "").strip()
     topic = (item or {}).get("topic", "").strip()
     if not url:
       continue
-    label = topic if topic else f"Recommended Resource {i}"
-    lines.append(f"- [{label}]({url}) - A focused reference to strengthen this subtopic.")
+    label = topic if topic else f"{default_label} {i}"
+    lines.append(f"- [{label}]({url}) - {suffix}")
 
   # Fall back gracefully when no URLs are available.
   if len(lines) <= 2:
-    lines.append("- [Review this lesson again](#) - No external references were available, so revise the personalized notes above.")
+    lines.append(no_refs)
   return f"{base}\n\n" + "\n".join(lines)
 
 def _resources_from_rag_chunks(rag_chunks: list[dict], top_k: int = 5) -> list[dict]:
@@ -1095,13 +1150,20 @@ def personalize_content():
   if not user:
     return jsonify({"error": "User not found."}), 404
   resolved_user_id = user.get("userId") or user.get("email")
-  # Source of truth lookup
+  wanted_lang = _wanted_content_language(user)
+  # Source of truth lookup (cache is language-specific)
   existing = user_subtopics.find_one({"userId": resolved_user_id, "course": course, "subtopic": subtopic_name})
-  if existing and existing.get("contentGenerated") and existing.get("content"):
-    print(f"[Personalize] HIT user_subtopics for {course} / {subtopic_name}")
+  stored_lang = (existing or {}).get("contentLanguage") or "en"
+  if (
+    existing
+    and existing.get("contentGenerated")
+    and existing.get("content")
+    and stored_lang == wanted_lang
+  ):
+    print(f"[Personalize] HIT user_subtopics for {course} / {subtopic_name} lang={wanted_lang}")
     quiz = existing.get("quiz") if isinstance(existing.get("quiz"), dict) else {}
     recommended_resources = existing.get("recommendedResources") if isinstance(existing.get("recommendedResources"), list) else []
-    enriched_content = _append_reference_resource_section(existing.get("content"), recommended_resources)
+    enriched_content = _append_reference_resource_section(existing.get("content"), recommended_resources, wanted_lang)
     return jsonify({
       "content": enriched_content,
       "quiz": quiz,
@@ -1165,8 +1227,13 @@ def personalize_content():
     if rag_context:
       augmented_base = (
         base_content
-        + "\n\nUse the following retrieved context to improve explanations, include real-world examples, and address weak areas:\n"
+        + "\n\n--- RETRIEVED SUPPLEMENTARY CONTEXT (RAG — enrichment only; must NOT contradict or replace the base lesson above) ---\n"
+        + "Use it to add examples, clarify weak areas, and deepen explanations while staying grounded in the base content.\n\n"
         + rag_context
+      )
+    if wanted_lang == "ur" and rag_context:
+      augmented_base += (
+        "\n\nThe retrieved context may be in English; extract facts and write the **full** personalized lesson in Urdu (Arabic script) for the learner."
       )
 
     # Wait up to 60s for Gemini. If it exceeds this,
@@ -1184,6 +1251,7 @@ def personalize_content():
           user_level=user_level,
           previous_quiz_feedback=previous_quiz_feedback or None,
           last_topic_recap=last_topic_recap or None,
+          output_language=wanted_lang,
         )
         try:
           content = future.result(timeout=60)
@@ -1197,6 +1265,7 @@ def personalize_content():
         user_level=user_level,
         previous_quiz_feedback=previous_quiz_feedback,
         last_topic_recap=last_topic_recap,
+        output_language=wanted_lang,
       )
     rag_resources = _resources_from_rag_chunks(rag_chunks, top_k=5)
     recommended_resources = []
@@ -1212,7 +1281,7 @@ def personalize_content():
       _resources_from_text_urls(base_content, top_k=5),
       top_k=5,
     )
-    content_with_resources = _append_reference_resource_section(content, recommended_resources)
+    content_with_resources = _append_reference_resource_section(content, recommended_resources, wanted_lang)
 
     print(f"[Personalize] MISS -> generated {len(content_with_resources)} chars, storing in user_subtopics")
     now = datetime.utcnow()
@@ -1223,6 +1292,7 @@ def personalize_content():
           "topic": body.get("topic", "").strip(),
           "studied": bool((existing or {}).get("studied", False)),
           "contentGenerated": True,
+          "contentLanguage": wanted_lang,
           "content": content_with_resources,
           "recommendedResources": recommended_resources,
           "lastViewedAt": now,
@@ -1265,8 +1335,9 @@ def personalize_content():
       user_level=user_level,
       previous_quiz_feedback=previous_quiz_feedback,
       last_topic_recap=last_topic_recap,
+      output_language=wanted_lang,
     )
-    fallback_content = _append_reference_resource_section(fallback_core, fallback_resources)
+    fallback_content = _append_reference_resource_section(fallback_core, fallback_resources, wanted_lang)
     now = datetime.utcnow()
     user_subtopics.update_one(
       {"userId": resolved_user_id, "course": course, "subtopic": subtopic_name},
@@ -1275,6 +1346,7 @@ def personalize_content():
           "topic": body.get("topic", "").strip(),
           "studied": bool((existing or {}).get("studied", False)),
           "contentGenerated": True,
+          "contentLanguage": wanted_lang,
           "content": fallback_content,
           "recommendedResources": fallback_resources,
           "lastViewedAt": now,
@@ -1530,14 +1602,23 @@ def get_subtopic(subtopic_id: str):
     return jsonify({"error": "Subtopic not found."}), 404
 
   quiz = doc.get("quiz") if isinstance(doc.get("quiz"), dict) else {}
+  wanted_lang = _wanted_content_language(user)
+  stored_lang = doc.get("contentLanguage") or "en"
+  content_generated = bool(doc.get("contentGenerated"))
+  raw_content = doc.get("content", "")
+  # Force regeneration path on the client if stored lesson language != profile language
+  if content_generated and isinstance(raw_content, str) and raw_content.strip() and stored_lang != wanted_lang:
+    content_generated = False
+    raw_content = ""
+
   out = {
     "userId": doc.get("userId"),
     "course": doc.get("course"),
     "topic": doc.get("topic", ""),
     "subtopic": doc.get("subtopic"),
     "studied": bool(doc.get("studied")),
-    "contentGenerated": bool(doc.get("contentGenerated")),
-    "content": doc.get("content", ""),
+    "contentGenerated": content_generated,
+    "content": raw_content,
     "quiz": {
       "questions": quiz.get("questions", []),
       "userAnswers": quiz.get("userAnswers", []),

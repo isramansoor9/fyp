@@ -8,7 +8,6 @@ import EnrollModal from "@/components/EnrollModal";
 import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
-import { backendUrl } from "@/lib/backendUrl";
 
 const COURSE_NAME = "Course 2";
 const COURSE_LEARN_PATH = "/course2/learn";
@@ -34,7 +33,7 @@ export default function Course2() {
     const u = user as { userId?: string; email?: string };
     setEnrolling(true);
     try {
-      const res = await fetch(backendUrl("/api/enroll"), {
+      const res = await fetch("http://localhost:5000/api/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: u.userId, email: u.email, course: COURSE_NAME }),

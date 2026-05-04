@@ -3,9 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { backendUrl } from "@/lib/backendUrl";
-import { urduFont } from "@/lib/urduFont";
-
 
 const PAKISTAN_CITIES = [
   "Karachi", "Lahore", "Faisalabad", "Rawalpindi", "Multan", "Hyderabad",
@@ -30,8 +27,8 @@ type FormState = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [uiLanguage, setUiLanguage] = useState<"english" | "urdu">("english");
-  const urdu = uiLanguage === "urdu";
+  /** Stored as user `preferredLanguage` for lessons/dashboard; registration UI stays English. */
+  const [preferredLearningLanguage, setPreferredLearningLanguage] = useState<"english" | "urdu">("english");
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -54,10 +51,10 @@ export default function RegisterPage() {
     setMessage(null);
 
     try {
-      const response = await fetch(backendUrl("/api/register"), {
+      const response = await fetch("http://localhost:5000/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, preferredLanguage: uiLanguage }),
+        body: JSON.stringify({ ...form, preferredLanguage: preferredLearningLanguage }),
       });
 
       const contentType = response.headers.get("content-type") ?? "";
@@ -89,7 +86,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={`min-h-screen bg-white text-black flex items-center justify-center px-4 py-10 sm:px-6 sm:py-12 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div className="min-h-screen bg-white text-black flex items-center justify-center px-4 py-10 sm:px-6 sm:py-12">
       <div className="max-w-5xl w-full grid grid-cols-1 gap-6 items-center lg:grid-cols-2 lg:gap-10">
         <div
           className="hidden lg:block h-full rounded-3xl p-10 shadow-lg"
@@ -99,37 +96,45 @@ export default function RegisterPage() {
             Teachus
           </p>
           <h1 className="text-4xl font-bold leading-tight mb-4">
-            {urdu ? "کثیر لسانی ذاتی ووکیشنل پلیٹ فارم میں شامل ہوں" : "Join the Multilingual Personalized Vocational Training Platform"}
+            Join the Multilingual Personalized Vocational Training Platform
           </h1>
           <p className="text-black/80 text-lg leading-relaxed">
-            {urdu
-              ? "اے آئی ذاتی لرننگ پاتھ کے ساتھ جاب ریڈی مہارتیں بنائیں۔ رجسٹر کریں اور کورسز، اسیسمنٹس اور اپنا ڈیش بورڈ حاصل کریں۔"
-              : "Build job-ready skills with AI-personalized learning paths. Register now to unlock courses, assessments, and your tailored dashboard."}
+            Build job-ready skills with AI-personalized learning paths. Register now to unlock courses, assessments, and your tailored dashboard.
           </p>
         </div>
 
         <div className="bg-white rounded-3xl border border-gray-200 shadow-lg p-5 sm:p-6 lg:p-8">
           <div className="mb-6">
             <p className="text-sm uppercase tracking-wide font-semibold text-gray-500">
-              {urdu ? "اکاؤنٹ بنائیں" : "Create Account"}
+              Create Account
             </p>
-            <h2 className="text-3xl font-bold mt-2">{urdu ? "رجسٹر کریں" : "Register"}</h2>
+            <h2 className="text-3xl font-bold mt-2">Register</h2>
 
 
             <p className="text-gray-500 mt-1">
-              {urdu ? "اپنا تعلیمی سفر چند منٹ میں شروع کریں۔" : "Start your learning journey in minutes."}
+              Start your learning journey in minutes.
             </p>
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">{urdu ? "انٹرفیس زبان" : "Interface Language"}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Preferred learning language (lessons &amp; dashboard — this page stays in English)
+            </label>
             <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 px-4 py-3">
               <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                <input type="radio" checked={!urdu} onChange={() => setUiLanguage("english")} />
+                <input
+                  type="radio"
+                  checked={preferredLearningLanguage === "english"}
+                  onChange={() => setPreferredLearningLanguage("english")}
+                />
                 English
               </label>
               <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                <input type="radio" checked={urdu} onChange={() => setUiLanguage("urdu")} />
-                اردو
+                <input
+                  type="radio"
+                  checked={preferredLearningLanguage === "urdu"}
+                  onChange={() => setPreferredLearningLanguage("urdu")}
+                />
+                Urdu (lessons)
               </label>
             </div>
           </div>

@@ -7,7 +7,6 @@ import { useAuth, getDisplayName } from "@/contexts/AuthContext";
 import { isUrdu, normalizeLanguage, type UILanguage } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
-import { backendUrl } from "@/lib/backendUrl";
 
 type User = {
   userId?: string;
@@ -45,7 +44,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!userTyped?.userId && !userTyped?.email) return;
-    fetch(backendUrl("/api/user/dashboard-summary"), {
+    fetch("http://localhost:5000/api/user/dashboard-summary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -128,7 +127,7 @@ export default function DashboardPage() {
     if (normalizeLanguage(userTyped.preferredLanguage) === nextLanguage || updatingLanguage) return;
     setUpdatingLanguage(true);
     try {
-      const res = await fetch(backendUrl("/api/user/language"), {
+      const res = await fetch("http://localhost:5000/api/user/language", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

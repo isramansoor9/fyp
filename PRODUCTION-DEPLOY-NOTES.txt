@@ -1,0 +1,120 @@
+PRODUCTION / DEPLOYMENT NOTES — Teachus FYP
+============================================
+Give this file to your assistant when you want to wire the hosted frontend (e.g. Vercel) to the hosted Flask API (e.g. Render) again, or to re-apply the env-based API URL pattern.
+
+Last updated: session summary (localhost revert + full feature list).
+
+
+A) FRONTEND: configurable API base (instead of hardcoded localhost)
+-------------------------------------------------------------------
+Currently the Next.js app uses **http://localhost:5000** directly in `fetch(...)` across many files.
+
+To support production without editing dozens of URLs:
+
+1) Add a new file: **lib/backendUrl.ts**
+
+--- copy below into lib/backendUrl.ts ---
+/**
+ * Flask backend origin (no trailing slash).
+ * Production: set NEXT_PUBLIC_API_URL in Vercel / .env.local, e.g. https://fyp-1xcl.onrender.com
+ */
+export function getBackendBaseUrl(): string {
+  return (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000").trim().replace(/\/+$/, "");
+}
+
+/** Absolute URL for an API path (path must start with `/`, e.g. `/api/login`). */
+export function backendUrl(path: string): string {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${getBackendBaseUrl()}${p}`;
+}
+--- end file ---
+
+2) Replace **http://localhost:5000** with **backendUrl("/api/...")** or **getBackendBaseUrl()** in these files (import from `@/lib/backendUrl`):
+
+  - app/login/page.tsx          → backendUrl("/api/login")
+  - app/register/page.tsx       → backendUrl("/api/register")
+  - app/dashboard/page.tsx      → backendUrl("/api/user/dashboard-summary"), backendUrl("/api/user/language")
+  - app/course1/page.tsx        → backendUrl("/api/enroll")
+  - app/course2/page.tsx        → backendUrl("/api/enroll")
+  - app/course3/page.tsx        → backendUrl("/api/enroll")
+  - app/course1/learn/page.tsx  → course-progress/init, course-progress
+  - app/course2/learn/page.tsx  → same
+  - app/course3/learn/page.tsx  → same
+  - app/course1/content/page.tsx → subtopic URL pattern `${backendUrl("/api/subtopic")}/${encodeURIComponent(titleParam)}?...`, personalize, subtopic/status, user/progress
+  - app/course2/content/page.tsx → same pattern (Course 2)
+  - app/course3/content/page.tsx → same pattern (Course 3)
+  - components/QuizModal.tsx      → backendUrl("/api/quiz/submit")
+  - app/sparky/page.tsx           → const API = getBackendBaseUrl();
+  - app/assessment/page.tsx     → const API = getBackendBaseUrl();
+
+3) **.env.local** (local) and **Vercel → Environment Variables** (production):
+
+  NEXT_PUBLIC_API_URL=https://YOUR-BACKEND.onrender.com
+
+  No trailing slash. Redeploy Next.js after changing.
+
+4) **Sparky / Assessment** use `${API}/api/...` — keep `API = getBackendBaseUrl()`.
+
+
+B) BACKEND (Render): CORS — required for browser calls from Vercel
+-----------------------------------------------------------------
+**Do not** use `resources={r"/api/*": ...}` with Flask-CORS: in Python regex `*` repeats `/`, so paths like `/api/login` do not match and preflight OPTIONS returns **no Access-Control-Allow-Origin** (“failed to fetch”).
+
+Current **backend/app.py** should use something like:
+
+  - Parse **CORS_ORIGIN** as comma-separated list; strip trailing slashes per origin.
+  - **CORS(app, origins=cors_origins, supports_credentials=False, allow_headers=[...], methods=[...])** globally (not tied to the broken `/api/*` resource pattern).
+  - Log on boot: `[CORS] Allowed origins (...)` so Render logs confirm parsing.
+
+**Render environment variable example:**
+
+  CORS_ORIGIN=https://teachus-pk.vercel.app,http://localhost:3000
+
+Redeploy backend after changing.
+
+
+C) OTHER FRONTEND FIXES (keep these in repo; not tied to localhost)
+--------------------------------------------------------------------
+1) **contexts/AuthContext.tsx** — `lastSyncedUserRawRef` so `syncFromStorage()` does not call `setUserState` when the raw `localstorage` JSON string is unchanged. Prevents new `user` object identity on every tab focus, which was re-triggering course **content** `useEffect` (course2/3 had `user` in deps) and wiping quiz state / reloading.
+
+2) **components/ContentLoader.tsx** — initial `tipIndex` must be `0` (not `Math.random()` in `useState` initializer) to avoid React **hydration mismatch**; randomize inside `useEffect` after mount.
+
+3) **app/components/LandingNavbar.tsx** — below `lg` breakpoint: hamburger menu + slide-down panel for nav links; desktop keeps horizontal links. `rightPrefix` (e.g. Back to Curriculum) appears in the mobile panel.
+
+
+D) BACKEND: Urdu lesson content when user prefers Urdu
+------------------------------------------------------
+Implemented in **backend/app.py**, **backend/gemini_prompts.py**, **backend/gemini_service.py**:
+
+  - `_wanted_content_language(user)` → `"ur"` if `preferredLanguage == "urdu"`, else `"en"`.
+  - **user_subtopics** documents store **contentLanguage** (`"ur"` | `"en"`).
+  - `/api/personalize/content` cache hit only if stored `contentLanguage` matches profile.
+  - `GET /api/subtopic/...` returns empty content + `contentGenerated: false` when stored language ≠ profile (forces regeneration on client).
+  - `POST /api/user/subtopic/status` sets **contentLanguage** when saving new `content`.
+  - Gemini personalization receives **output_language**; prompts require full lesson in Urdu (Arabic script) when `"ur"`.
+  - `_local_personalize_content` and `_append_reference_resource_section` take **output_language** for Urdu headings / resource blurb when Gemini is unavailable.
+
+Requires **GEMINI_API_KEY** on the server for real Urdu generation (fallback is partial).
+
+
+E) FILES THAT ONLY EXIST OR WERE CHANGED IN THIS WORKSTREAM
+------------------------------------------------------------
+  - PRODUCTION-DEPLOY-NOTES.txt   (this file)
+  - .env.example                  (optional comments; production uses Vercel env)
+  - README.md                     (local vs production pointer to this file)
+
+
+F) QUICK DEPLOY CHECKLIST
+-------------------------
+[ ] Render: set CORS_ORIGIN (comma-separated origins, no trailing slash on Vercel URL)
+[ ] Render: MONGODB_URI, GEMINI_API_KEY, PORT if needed, Gunicorn command
+[ ] Vercel: NEXT_PUBLIC_API_URL = https://your-render-service.onrender.com
+[ ] Re-apply section A if the repo still uses literal localhost in fetch()
+[ ] Redeploy both services; verify browser Network tab shows API calls to Render, not localhost
+[ ] Confirm Render logs show `[CORS] Allowed origins` including your Vercel URL
+
+
+G) YOUR KNOWN PRODUCTION URLS (fill in / update as needed)
+---------------------------------------------------------
+Frontend (example): https://teachus-pk.vercel.app
+Backend (example):  https://fyp-1xcl.onrender.com

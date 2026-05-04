@@ -8,9 +8,7 @@ import { isUrdu } from "@/lib/uiLanguage";
 import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-import { getBackendBaseUrl } from "@/lib/backendUrl";
-
-const API = getBackendBaseUrl();
+const API = "http://localhost:5000";
 
 type AQ = {
   question: string;

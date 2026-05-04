@@ -3,259 +3,332 @@
 # ---------------------------------------
 def build_easy_content_prompt(topic_name: str) -> str:
     """
-    Builds a structured prompt for generating easy base content.
-    Focus on basic concepts, simple language, beginner-friendly.
+    Builds a HIGH-QUALITY structured prompt for generating deep beginner-level content.
+    Focus: weak learners, strong foundations, step-by-step teaching, conceptual clarity.
     """
     import random
+
     instruction_templates = [
-        f"Explain the topic '{topic_name}' comprehensively for auto electrician students at beginner level with very weak basic concepts.",
-        f"Create a detailed educational lesson about '{topic_name}' for auto electrician training that covers basics for beginners.",
-        f"Teach auto electrician students about '{topic_name}' with explanations suitable for beginners learners with very weak basic concepts.",
-        f"Provide a comprehensive explanation of '{topic_name}' for auto electrician students at beginner level, including fundamental concepts.",
-        f"Generate educational content about '{topic_name}' for auto electrician students that adapts to beginner learning levels.",
+        f"Teach the topic '{topic_name}' step-by-step to a complete beginner auto electrician student with extremely weak prior knowledge.",
+        f"Create a deeply detailed beginner lesson on '{topic_name}' designed for students who struggle to understand technical concepts.",
+        f"Explain '{topic_name}' in the simplest and most intuitive way possible for auto electrician trainees with no background knowledge.",
+        f"Develop a highly structured beginner training module on '{topic_name}' that builds understanding from zero.",
+        f"Break down '{topic_name}' into very small, easy-to-understand parts for weak learners in auto electrician training.",
     ]
+
     selected_instruction = random.choice(instruction_templates)
-    
+
     prompt = f"""
-You are an expert vocational education content creator and certified Auto Electrician Instructor,
-specializing in beginner-level automotive electrical systems training.
+You are a **master vocational instructor and cognitive learning expert** specializing in
+teaching **Auto Electrician students with very weak foundational knowledge**.
+
+Your teaching style must:
+- Break complex ideas into VERY SMALL steps
+- Use repetition and reinforcement
+- Use simple analogies from daily life
+- Avoid cognitive overload
+- Build understanding gradually (scaffolding approach)
 
 {selected_instruction}
 
-Target Learner:
-- Auto electrician student with VERY BASIC or NO prior knowledge
-- Learning Level: BEGINNER
-- Purpose: Build strong foundational understanding
+────────────────────────────────────
+TARGET LEARNER PROFILE
+────────────────────────────────────
+- Beginner (ZERO prior knowledge)
+- Struggles with technical terms
+- Learns best through:
+  → Simple language
+  → Repetition
+  → Real-life examples
+  → Visual imagination
 
-
-Your Task:
-Create a COMPLETE, beginner-friendly learning module for the topic:
-**"{topic_name}"**
-
+────────────────────────────────────
+CRITICAL TEACHING RULES (MANDATORY)
+────────────────────────────────────
+1. NEVER assume prior knowledge.
+2. EVERY new term must be explained IMMEDIATELY in simple words.
+3. Use **"micro-explanations"**:
+   - Explain → simplify → give example → restate simply
+4. Use **layered explanation**:
+   - Start very basic → then slightly deeper → then reinforce
+5. After every major section:
+   - Add a **"Quick Check"** (1–2 simple questions)
+6. Use **analogies** wherever possible (water flow, pipes, switches, etc.)
+7. Keep sentences SHORT and EASY.
+8. Avoid technical overload.
+9. Repeat important ideas in different ways.
 
 ────────────────────────────────────
 TOPIC-SPECIFIC LOGIC (MANDATORY)
 ────────────────────────────────────
-- IF the topic name includes **(theory)**:
-  → Focus heavily on:
-    - Definitions and concepts
-    - Basic principles and "why it works"
-    - Cause–effect relationships
-    - Simple physics explanations using analogies
-    - Conceptual understanding (NOT formulas or calculations)
+- IF topic includes **(theory)**:
+  → Focus on:
+    - Concepts, definitions, WHY things happen
+    - Cause–effect understanding
+    - Intuition building
+  → STRICTLY avoid calculations or formulas
 
-- IF the topic name includes **(practical)**:
-  → Focus heavily on:
-    - Identifying physical components and tools
-    - Basic safety rules for beginners
-    - Very simple, observation-based steps
-    - What the learner should SEE / RECOGNIZE
-    - What a correct outcome looks like
-  → Must include hands-on execution, troubleshooting, or testing procedures
-
-────────────────────────────────────
-CONTENT RULES
-────────────────────────────────────
-1. Assume ZERO prior knowledge.
-2. Explain EVERY technical term before using it.
-3. Use simple, clear language suitable for first-time learners.
-4. Use real automotive examples familiar to beginners (battery, bulb, wire, fuse).
-5. Avoid jargon unless clearly explained.
-6. Emphasize safety awareness at a basic level.
+- IF topic includes **(practical)**:
+  → Focus on:
+    - Physical components and tools
+    - What to observe visually
+    - Step-by-step simple actions
+    - Beginner-safe procedures
+    - Expected results
+  → Include simple troubleshooting basics
 
 ────────────────────────────────────
 MANDATORY CONTENT STRUCTURE
 ────────────────────────────────────
-Your content MUST be structured as follows:
 
-1. **Introduction**
-   - What is this topic in the simplest terms?
-   - Why is it important for a beginner auto electrician?
+1. **Super Simple Introduction**
+   - Explain like teaching a child
+   - What is it? (1–2 lines)
+   - Why should a beginner care?
 
-2. **Learning Objectives**
-   - List 2-3 clear learning outcomes
-   - State what students will be able to do after learning this topic
-   - Try to use Remember & Understand verbs
-   - Example: define, identify, explain, list
+2. **Learning Objectives (Beginner Level)**
+   - 2–4 simple outcomes using basic verbs:
+     (identify, define, explain, recognize)
 
-3. **Key Terms & Definitions**
-   - Simple glossary of essential terms
-   - One-line beginner-friendly definitions
+3. **Very Basic Idea (Core Concept)**
+   - Explain in the simplest possible way
+   - Use analogy FIRST, then definition
 
-4. **Basic Concepts Explained Simply**
-   - Clear explanations using analogies
-   - No formulas or calculations
-   - Focus on "what it is" and "why it matters"
+4. **Key Terms (Explained Simply)**
+   - Each term:
+     → Simple meaning
+     → Example in real life
 
-5. **Component / Tool Identification**
-   - List basic components or tools
-   - Explain each item's basic role
+5. **Concept Breakdown (Step-by-Step)**
+   - Break into SMALL parts
+   - For each part:
+     → Explain
+     → Example
+     → Simple restatement
 
-6. **How It Works (Beginner View)**
-   - Step-by-step conceptual flow
-   - Explain what happens, not how to fix or test
+6. **How It Works (Slow Step-by-Step Flow)**
+   - Numbered steps
+   - Explain what happens at each step
+   - No jumps in logic
 
-7. **Visual Explanation (Text-Based)**
-   - Describe simple diagrams or images
-   - Example: "A simple circuit with a battery, wire, and bulb"
+7. **Component / Tool Identification**
+   - Name → What it looks like → What it does
 
-8. **Simple Real-World Automotive Examples**
-   - Relate the concept to common vehicle situations
+8. **Visual Explanation (Imagine This)**
+   - Describe a simple diagram in words
+   - Help learner “see” it mentally
 
-9. **Safety First (Beginner Level)**
-   - Fundamental precautions only
-   - No advanced workshop procedures
+9. **Real Vehicle Examples**
+   - Connect to real car/bike situations
 
-10. **Common Beginner Misunderstandings**
-    - Simple misconceptions or safety mistakes to avoid
+10. **Quick Check (Very Easy)**
+   - 2–3 simple questions
+   - Direct recall or understanding
 
-11. **Short Summary & Recap**
-    - 3–5 key points the learner must remember
+11. **Safety Basics (Very Important)**
+   - Simple, beginner-level safety rules
 
-12. **Glossary of Terms**
-    - Alphabetical list of key beginner terms
+12. **Common Mistakes Beginners Make**
+   - Practical and conceptual mistakes
+
+13. **Mini Recap (Reinforcement)**
+   - Repeat key ideas in simple bullet points
+
+14. **Glossary (A–Z Style)**
+   - Very simple one-line meanings
 
 ────────────────────────────────────
 FORMAT REQUIREMENTS
 ────────────────────────────────────
-- Output in clean, well-structured **Markdown**
-- Use headings, bullet points, and short paragraphs
-- No advanced math, diagnostics, or repair steps
+- Use clean **Markdown**
+- Use headings, bullet points, spacing
+- Keep paragraphs SHORT
+- Avoid dense text blocks
 
 ────────────────────────────────────
 FINAL INSTRUCTION
 ────────────────────────────────────
-Now generate the COMPLETE beginner-level learning module
-strictly following all rules above for topic **"{topic_name}"**.
+Generate a **DETAILED, HIGH-CLARITY, BEGINNER-FRIENDLY learning module**
+for:
+
+**"{topic_name}"**
+
+Make sure:
+- Content is EASY but also DEEP
+- Every concept is clearly understood
+- The learner could study this WITHOUT a teacher
 
 """
     return prompt
 
 def build_intermediate_content_prompt(topic_name: str) -> str:
+    """
+    Builds a HIGH-DEPTH intermediate prompt focused on diagnostics,
+    reasoning, and real-world technician skill development.
+    """
     import random
+
     instruction_templates = [
-        f"Explain the topic '{topic_name}' comprehensively for auto electrician students at intermediate level with basic foundational knowledge.",
-        f"Create a detailed educational lesson about '{topic_name}' for auto electrician training that covers application and analysis for intermediate learners.",
-        f"Teach auto electrician students about '{topic_name}' with explanations suitable for intermediate learners who can identify components and use basic tools.",
-        f"Provide a comprehensive explanation of '{topic_name}' for auto electrician students at intermediate level, including practical applications and diagnostics.",
-        f"Generate educational content about '{topic_name}' for auto electrician students that focuses on applying and analyzing concepts.",
+        f"Train an intermediate-level auto electrician student to apply and analyze the topic '{topic_name}' in real workshop conditions.",
+        f"Develop a hands-on, diagnostic-focused lesson on '{topic_name}' for intermediate learners with basic technical knowledge.",
+        f"Teach '{topic_name}' with strong emphasis on troubleshooting, system behavior, and real-world application.",
+        f"Create a practical and analytical training module on '{topic_name}' that builds technician-level thinking.",
+        f"Explain '{topic_name}' in a way that helps students diagnose, interpret, and solve real automotive electrical problems.",
     ]
+
     selected_instruction = random.choice(instruction_templates)
-    
+
     prompt = f"""
-    You are an expert vocational education content creator and automotive electrical systems specialist
-    with strong hands-on workshop and diagnostic experience.
+You are a **senior automotive electrical instructor and diagnostic expert**
+with real-world workshop experience.
 
-    {selected_instruction}
+Your role is to train students to THINK like technicians, not just follow steps.
 
-    Target Learner:
-    - Auto electrician student with BASIC foundational knowledge
-    - Can identify components, read simple wiring diagrams, and use a multimeter safely
-    - Learning Level: INTERMEDIATE
-    - Purpose: Develop practical skills and analytical thinking
+{selected_instruction}
 
-    Your Task:
-    Create a COMPLETE, skill-focused learning module for the topic:
-    **"{topic_name}"**
+────────────────────────────────────
+TARGET LEARNER PROFILE
+────────────────────────────────────
+- Has BASIC knowledge of:
+  → Components (battery, relay, fuse, sensors)
+  → Multimeter usage
+  → Basic wiring diagrams
+- Learning Level: INTERMEDIATE
+- Goal: Become capable of **diagnosing and analyzing faults independently**
 
+────────────────────────────────────
+CRITICAL TEACHING RULES (MANDATORY)
+────────────────────────────────────
+1. Focus on **WHY + HOW**, not just WHAT.
+2. Every procedure step must include:
+   → Purpose of the step
+   → What result means
+3. Emphasize **decision-making logic**:
+   → “If this happens → then check this → because…”
+4. Use **diagnostic reasoning chains**:
+   → Symptom → Possible causes → Tests → Conclusion
+5. Include **measurement interpretation**:
+   → What voltage/resistance values indicate
+6. Avoid basic definitions unless necessary.
+7. Simulate real workshop thinking and constraints.
+8. Encourage systematic troubleshooting (NOT guesswork).
 
+────────────────────────────────────
+TOPIC-SPECIFIC LOGIC (MANDATORY)
+────────────────────────────────────
+- IF topic includes **(theory)**:
+  → Focus on:
+    - System interaction and signal flow
+    - Functional relationships between components
+    - Cause–effect chains
+    - Diagram interpretation
+    - Comparative system behavior
 
-    ────────────────────────────────────
-    TOPIC-SPECIFIC LOGIC (MANDATORY)
-    ────────────────────────────────────
-    - IF the topic name includes **(theory)**:
-    → Emphasize:
-        - How components and subsystems interact
-        - Signal flow and operational logic
-        - Cause–effect relationships within the system
-        - Comparative analysis of similar circuits or architectures
-        - Interpretation of diagrams, graphs, or data
+- IF topic includes **(practical)**:
+  → Focus on:
+    - Step-by-step diagnostic procedures
+    - Tool usage with correct settings
+    - Real measurement scenarios
+    - Fault isolation techniques
+    - Verification of repair
+  → MUST include troubleshooting workflows
 
-    - IF the topic name includes **(practical)**:
-    → Emphasize:
-        - Step-by-step diagnostic or service procedures
-        - Logical troubleshooting sequences and decision paths
-        - Correct tool selection and settings
-        - Interpreting measurements (voltage, resistance, continuity, data signals)
-        - Differentiating symptoms from root causes
-    → Must include hands-on execution, troubleshooting, or testing procedures
+────────────────────────────────────
+MANDATORY CONTENT STRUCTURE
+────────────────────────────────────
 
-    ────────────────────────────────────
-    CONTENT RULES
-    ────────────────────────────────────
-    1. Assume prerequisite knowledge is already known (basic terms, symbols, safety).
-    2. Avoid basic definitions unless clarification is necessary for application.
-    3. Focus on **doing**, **interpreting**, and **reasoning**, not memorizing.
-    4. Use realistic automotive workshop contexts and constraints.
-    5. Present information as if training a technician for real-world jobs.
+1. **Technical Context & Problem Framing**
+   - What real-world issue does this topic solve?
+   - Where is it encountered in vehicles?
 
-    ────────────────────────────────────
-    MANDATORY CONTENT STRUCTURE
-    ────────────────────────────────────
-    Your content MUST follow this structure:
+2. **Learning Objectives (Apply & Analyze Only)**
+   - Use verbs like:
+     → diagnose, interpret, test, analyze, compare, verify
 
-    1. **Technical Overview / Prerequisite Recap**
-    - Brief recap of relevant prior knowledge
-    - Define the real-world problem this topic addresses
+3. **System Operation (Functional View)**
+   - Explain how the system works as a whole
+   - Focus on interaction between components
+   - Include signal or power flow explanation
 
-    2. **Learning Objectives**
-    - Use ONLY Apply & Analyze verbs
-    - Example: diagnose, calculate, interpret, compare, troubleshoot
+4. **Diagnostic Workflow (Step-by-Step with Logic)**
+   - Numbered steps
+   - For EACH step include:
+     → What to do
+     → Why you are doing it
+     → What result means
+   - Use decision logic:
+     → If X → then Y
 
-    2. **Learning Objectives**
-   - List 2-3 clear learning outcomes
-   - State what students will be able to do after learning this topic
-   - Try to use Apply & Analyze verbs
-    - Example: diagnose, calculate, interpret, compare, troubleshoot
+5. **Measurement & Data Interpretation**
+   - Provide sample readings:
+     → Voltage, resistance, continuity, signals
+   - Explain:
+     → What is normal
+     → What indicates a fault
 
-    3. **System-Level Explanation / Operational Logic**
-    - Explain how the system works as a whole
-    - Show interactions between components or modules
+6. **Workshop Scenarios (Real Fault Cases)**
+   - At least 2 cases
+   - Each case must include:
+     → Symptom
+     → Diagnostic steps
+     → Reasoning
+     → Final fault
 
-    4. **Procedure Map or Diagnostic Workflow**
-    - Step-by-step application or troubleshooting sequence
-    - Use logical order and decision points
+7. **Fault Analysis Table**
+   - Format:
+     | Symptom | Possible Cause | Test | Reasoning |
 
-    5.Must include **Application Scenarios (Workshop-Based)**
-    - Present realistic vehicle fault cases
-    - Guide the learner through applying procedures or principles
+8. **System Behavior Under Fault Conditions**
+   - Explain how failures affect the system
+   - Show cause → effect propagation
 
-    6. **Analysis Exercises**
-    - Compare two systems, methods, or circuit types
-    - Interpret sample data (multimeter readings, diagrams, waveforms)
+9. **Common Diagnostic Mistakes**
+   - Focus on thinking errors (not just actions)
+   - Explain WHY mistakes happen
 
-    7. **Component Interaction & Fault Analysis**
-    - Explain how faults propagate through the system
-    - Include tables such as:
-        - Symptom | Possible Cause | Reasoning
+10. **Professional Workshop Tips**
+   - Efficiency
+   - Accuracy
+   - Tool handling
+   - Safety in diagnostics
 
-    8. **Common Diagnostic Mistakes & Why They Occur**
-    - Focus on reasoning errors and misinterpretation of data
+11. **Quick Diagnostic Challenge**
+   - 1–2 short cases/questions
+   - Require reasoning, not memorization
 
-    9. **Practical Workshop Tips**
-    - Efficiency, accuracy, and professional best practices
+12. **Summary (Technician Takeaways)**
+   - Focus on:
+     → Diagnostic approach
+     → Key patterns
+     → Transferable skills
 
-    10. **Summary of Key Takeaways**
-        - Focus on transferable procedures and analytical frameworks
+────────────────────────────────────
+FORMAT REQUIREMENTS
+────────────────────────────────────
+- Use clean **Markdown**
+- Use:
+  → Tables
+  → Step-by-step lists
+  → Decision logic (IF/THEN)
+- Avoid long paragraphs
+- Keep content structured and practical
 
-    ────────────────────────────────────
-    FORMAT REQUIREMENTS
-    ────────────────────────────────────
-    - Output in clean, well-structured **Markdown**
-    - Use tables, flowcharts (text-based), and bullet points where helpful
-    - Include decision-based logic (e.g., "If voltage is present → analyze ground path")
-    - No beginner explanations or procedural repetition
+────────────────────────────────────
+FINAL INSTRUCTION
+────────────────────────────────────
+Generate a **DETAILED, PRACTICAL, DIAGNOSTIC-FOCUSED learning module**
+for:
 
-    ────────────────────────────────────
-    FINAL INSTRUCTION
-    ────────────────────────────────────
-    Now generate the COMPLETE intermediate-level learning module
-    strictly following all rules above for topic **"{topic_name}"**.
+**"{topic_name}"**
+
+Ensure:
+- Strong reasoning depth
+- Real workshop relevance
+- Clear diagnostic thinking process
+- Student can apply knowledge independently
 
 """
-
     return prompt
-
 def build_advanced_content_prompt(topic_name: str) -> str:
     import random
     instruction_templates = [

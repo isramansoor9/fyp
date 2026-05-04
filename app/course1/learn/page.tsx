@@ -6,7 +6,6 @@ import { ChevronRight, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { isUrdu } from "@/lib/uiLanguage";
-import { backendUrl } from "@/lib/backendUrl";
 import { urduFont } from "@/lib/urduFont";
 
 interface Subtopic {
@@ -136,7 +135,7 @@ export default function Course1LearnPage() {
           ...data.practicalTopics.flatMap((t) => t.subtopics.map((s) => s.title)),
         ];
         if (u?.userId || u?.email) {
-          fetch(backendUrl("/api/user/course-progress/init"), {
+          fetch("http://localhost:5000/api/user/course-progress/init", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -167,7 +166,7 @@ export default function Course1LearnPage() {
     if (!u?.userId && !u?.email) return;
     const refreshProgress = (silent = false) => {
       if (!silent) setProgressLoading(true);
-      fetch(backendUrl("/api/user/course-progress"), {
+      fetch("http://localhost:5000/api/user/course-progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

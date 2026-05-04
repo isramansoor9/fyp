@@ -22,21 +22,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Environment variables (frontend)
 
-Create a `.env.local` file (see `.env.example`). Point the Next.js app at your Flask API:
+Local development uses **`http://localhost:5000`** in the Next.js source for Flask API calls (no env var required for the default setup).
 
-```
-NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
-```
-
-Use the origin only (no trailing slash, no `/api` suffix). On [Vercel](https://vercel.com), add the same variable under Project → Settings → Environment Variables.
-
-Restart the dev server after updating environment variables.
-
-### Deployed frontend (Vercel) + backend (Render)
-
-1. **Vercel** — set `NEXT_PUBLIC_API_URL` to your Render URL, e.g. `https://fyp-1xcl.onrender.com` (no trailing slash), then redeploy.
-2. **Render** — set `CORS_ORIGIN` to your live frontend origin(s), comma-separated, e.g. `https://teachus-pk.vercel.app,http://localhost:3000` (no trailing slash). If this is wrong, preflight fails with “No 'Access-Control-Allow-Origin' header”. After deploying the backend, check Render logs for the line `[CORS] Allowed origins (...)` to confirm the list parsed correctly.
-3. After changing Render env vars, trigger a manual deploy or restart so Gunicorn picks them up.
+For **production** (Vercel + Render), follow **`PRODUCTION-DEPLOY-NOTES.txt`** in the repo root to re-apply the env-based API base URL and hosting checklist.
 
 ## Flask backend (API)
 
@@ -61,7 +49,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The API serves routes under `/api/...`. The frontend builds URLs from `NEXT_PUBLIC_API_URL` (see `lib/backendUrl.ts`), defaulting to `http://localhost:5000` when unset.
+The API serves routes under `/api/...`. The local frontend calls `http://localhost:5000` directly.
 
 ## Learn More
 

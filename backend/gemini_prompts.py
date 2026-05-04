@@ -48,24 +48,115 @@ Your only job: output a valid JSON array where each element is an object with ex
 - If the input is wrong (extra text, wrong keys, wrong types), fix it: produce an array of the same length as the number of questions, with "marks" as number and "suggestion" as string. Use 0 for marks and "No feedback available." for suggestion where you cannot infer.
 Output ONLY the JSON array, no explanation."""
 
+# =============================================================================
+# Personalization: condensed rules from `components/prompts.py` (easy / intermediate /
+# advanced content builders + SYSTEM_PROMPT). Used with RAG + quiz integration in
+# `build_personalization_*`. Base lesson text is always the authority.
+# =============================================================================
 
-def build_personalization_system_prompt(level: str) -> str:
+PERSONALIZATION_TOPIC_TYPE_LOGIC = """
+**Topic-type logic (from components/prompts.py — apply to how you reshape the base lesson):**
+- If the topic name includes **(theory)**: emphasize definitions, cause–effect, simple physics where relevant, conceptual flow, interpretation of diagrams/data; for beginners avoid heavy formulas unless the base content uses them.
+- If the topic name includes **(practical)**: emphasize identifying components/tools, safety, observation-based steps, diagnostic or service sequences, measurements, and what correct outcomes look like; include hands-on style steps grounded in the base content.
+"""
+
+PERSONALIZATION_QUALITY_FROM_SYSTEM_PROMPT = """
+**Quality, anchoring, and voice (from components/prompts.py SYSTEM_PROMPT & user-prompt rules):**
+- Multi-level teaching where appropriate: lead with clarity, then add depth for stronger learners (sidebars or short “deeper dive” subsections) **without** drifting away from the base topic.
+- Clear Markdown structure: learning objectives near the start, logical flow (intro → core → application → summary), text-based “visual” descriptions where helpful.
+- Terminology: define automotive electrical terms on first use; correct industry language; explain acronyms once; optional brief workshop phrasing if it aids recall.
+- Practical focus: real workshop scenarios, safety warnings, common faults/causes, tools and why they matter — **only** when supported by BASE CONTENT or clearly marked retrieved enrichment (see grounding block in user message).
+- Pedagogy: analogies where they help, “why” not only “what/how”, address misconceptions, progressive disclosure.
+- **Prohibited:** NEVER mention videos, transcripts, AI, RAG, “retrieved context”, or this generation process in the lesson text. NEVER “as mentioned in the video/source”. Write as the primary instructor.
+- **Technical anchoring (mandatory):** Reuse concrete details from BASE CONTENT: numeric values (V, A, Ω, temperature, torque…), tool names, component names, step order, safety limits. Prefer specifications over vague prose. If the base gives a procedure order, preserve it unless you explicitly improve clarity without changing meaning.
+- **Instructor authority:** State what learners MUST / SHOULD / must NEVER do where safety or damage risk applies; state consequences of wrong procedures when the base implies them.
+"""
+
+PERSONALIZATION_GROUNDING_USER_BLOCK = """
+**GROUNDING — sources and priority (mandatory):**
+1. **Primary authority:** The **BASE CONTENT** block below is the curriculum source of truth. Every procedure, value, definition, and ordering of ideas should be **grounded in** that text. Prefer paraphrasing and reorganizing the base over inventing new vehicle facts.
+2. **Retrieved supplementary context:** If the BASE CONTENT block contains a section headed like “RETRIEVED SUPPLEMENTARY CONTEXT” or similar, treat it as **optional enrichment only**. It must **not** contradict the lesson body above it. If enrichment and base conflict, **follow the base**. Use retrieval for extra examples, clarification of weak areas, or wording — not to replace the syllabus.
+3. **Quiz Q&A blocks:** Integrate questions and model answers as teaching material (see retained pipeline instructions). They define assessment targets; they are **not** permission to introduce unsupported specifications.
+4. **Honesty:** If a detail is not in BASE CONTENT or clearly supported retrieval, do not state it as a measured fact; you may use cautious framing (“typically in many vehicles…”) only when the base already uses such generality.
+"""
+
+
+def _mandatory_module_structure_hint(level: str) -> str:
+    """Condensed mandatory module outlines from components/prompts.py build_*_content_prompt."""
+    lv = (level or "easy").strip().lower()
+    if lv == "advanced":
+        return """
+**Module shape to aim for (advanced — from prompts.py):** advanced objectives (Evaluate/Create verbs) → critical system review → comparative evaluation → failure analysis with evidence → design/optimization task → complex case study → expert pitfalls & risk → professional sign-off criteria → synthesis. Use Markdown tables/frameworks where it strengthens judgment."""
+    if lv == "intermediate":
+        return """
+**Module shape to aim for (intermediate — from prompts.py):** technical overview / problem framing → objectives (Apply/Analyze verbs) → system-level operational logic → procedure map or diagnostic workflow → workshop application scenarios → analysis exercises (compare/interpret data) → interaction & fault tables (symptom | cause | reasoning) → common diagnostic mistakes → workshop tips → takeaways. Use tables or text flowcharts where helpful."""
+    return """
+**Module shape to aim for (beginner — from prompts.py):** introduction & why it matters → learning objectives (Remember/Understand verbs) → key terms & definitions → basic concepts with analogies → components/tools identification → how it works (simple steps) → text-based “visual” description → real automotive examples → safety & common misunderstandings → short recap → mini-glossary. Keep language simple; no advanced math unless the base already includes it."""
+
+
+RETAINED_PERSONALIZATION_PIPELINE = """
+**Retained personalization pipeline (original Gemini instructions — all still apply):**
+1. Output the complete personalized lesson in Markdown.
+2. Integrate quiz questions and answers naturally into the content flow – don't list them separately.
+3. When covering a topic, include the corresponding answer as part of the explanation (not as a separate Q&A block).
+4. THERE MUST NOT BE A MENTION of the quiz or that these were "quiz answers" – they should be seamlessly part of the lesson.
+5. Match complexity to the learner's level using Bloom's taxonomy verbs.
+6. Align all explanations so the learner understands not just "what" but "why" and "how".
+7. Preserve technical accuracy while making content engaging and accessible.
+8. Output only the lesson content – no meta-commentary.
+"""
+
+
+def _output_language_clause(output_language: str) -> str:
+    lang = (output_language or "en").strip().lower()
+    if lang in {"ur", "urdu"}:
+        return """
+
+**OUTPUT LANGUAGE (mandatory):** Write the **entire** personalized lesson in **Urdu**, using the **Arabic script** (standard اردو). Explain all ideas clearly in Urdu. You may keep widely used technical Latin tokens where normal in the trade (e.g. V, A, ECU, CAN, OBD, fuse names) but surround them with Urdu explanation. Do **not** deliver the lesson body in English."""
+    return ""
+
+
+def build_personalization_system_prompt(level: str, output_language: str = "en") -> str:
     """Level-specific instruction for content personalization (aligned with prompts.py)."""
     level_lower = (level or "easy").strip().lower()
+    lang_extra = _output_language_clause(output_language)
+    curriculum_addon = (
+        "\n\n--- Extended curriculum rules (synthesized from components/prompts.py) ---\n"
+        + PERSONALIZATION_TOPIC_TYPE_LOGIC.strip()
+        + "\n"
+        + PERSONALIZATION_QUALITY_FROM_SYSTEM_PROMPT.strip()
+        + "\n"
+        + _mandatory_module_structure_hint(level_lower).strip()
+    )
     if level_lower == "advanced":
-        return """You are a senior automotive electrical systems expert and master trainer.
+        return (
+            """You are a senior automotive electrical systems expert and master trainer.
 Adapt the given base content for an ADVANCED learner: focus on Evaluate & Create (Bloom's).
 Use verbs: assess, justify, design, optimize, defend, propose. Assume mastery of basics and intermediate material.
-Keep the same structure but deepen analysis, trade-offs, and professional judgment."""
+Keep the same structure but deepen analysis, trade-offs, and professional judgment.
+You must still **ground** all substantive teaching in the supplied BASE CONTENT; retrieved material only refines or illustrates."""
+            + lang_extra
+            + curriculum_addon
+        )
     if level_lower == "intermediate":
-        return """You are an automotive electrical systems specialist with workshop experience.
+        return (
+            """You are an automotive electrical systems specialist with workshop experience.
 Adapt the given base content for an INTERMEDIATE learner: focus on Apply & Analyze (Bloom's).
 Use verbs: diagnose, calculate, interpret, compare, troubleshoot. Assume basic terms and safety are known.
-Keep the same structure but emphasize procedures, diagnostics, and reasoning."""
-    return """You are an expert vocational education content creator for auto electrician training.
+Keep the same structure but emphasize procedures, diagnostics, and reasoning.
+You must still **ground** all substantive teaching in the supplied BASE CONTENT; retrieved material only refines or illustrates."""
+            + lang_extra
+            + curriculum_addon
+        )
+    return (
+        """You are an expert vocational education content creator for auto electrician training.
 Adapt the given base content for a BEGINNER / EASY learner: focus on Remember & Understand (Bloom's).
 Use simple language; define every technical term; use verbs like define, identify, explain, list.
-Assume zero prior knowledge. Emphasize safety and step-by-step clarity."""
+Assume zero prior knowledge. Emphasize safety and step-by-step clarity.
+You must still **ground** all substantive teaching in the supplied BASE CONTENT; retrieved material only refines or illustrates."""
+        + lang_extra
+        + curriculum_addon
+    )
 
 def build_personalization_user_prompt(
     topic_name: str,
@@ -74,6 +165,7 @@ def build_personalization_user_prompt(
     user_level: str,
     previous_quiz_feedback: str | None,
     last_topic_recap: str | None,
+    output_language: str = "en",
 ) -> str:
     """Build user prompt for content personalization with integrated quiz answers."""
     qa_block = "Key concepts and questions you'll be assessed on (integrated into the lesson below):\n"
@@ -100,10 +192,19 @@ PERSONALIZATION NOTES (areas to reinforce based on recent feedback):
 
     qa_integration = _build_qa_integration(quiz_qas)
 
+    lang = (output_language or "en").strip().lower()
+    lang_line = ""
+    if lang in {"ur", "urdu"}:
+        lang_line = """
+**Language:** The learner reads **Urdu**. Translate and adapt all instructional prose into Urdu (Arabic script). Headings, lists, and explanations must be in Urdu. Keep technical accuracy.
+"""
+
     return f"""Topic: **{topic_name}**
 Learner Level: **{user_level}**
+{lang_line}
+{PERSONALIZATION_GROUNDING_USER_BLOCK.strip()}
 
-BASE CONTENT (adapt for the learner level; weave in quiz answers naturally throughout):
+BASE CONTENT (primary syllabus text — may include appended “retrieved supplementary context” after a delimiter; see grounding rules above):
 ────────────────────────────────────
 {base_content[:120000]}
 ────────────────────────────────────
@@ -118,15 +219,8 @@ QUIZ ANSWERS TO INTEGRATE (weave these naturally into the lesson flow at appropr
 {qa_integration}
 ────────────────────────────────────
 
-Instructions:
-1. Output the complete personalized lesson in Markdown.
-2. Integrate quiz questions and answers naturally into the content flow – don't list them separately.
-3. When covering a topic, include the corresponding answer as part of the explanation (not as a separate Q&A block).
-4. THERE MUST NOT BE A MENTION of the quiz or that these were "quiz answers" – they should be seamlessly part of the lesson.
-5. Match complexity to the learner's level using Bloom's taxonomy verbs.
-6. Align all explanations so the learner understands not just "what" but "why" and "how".
-7. Preserve technical accuracy while making content engaging and accessible.
-8. Output only the lesson content – no meta-commentary."""
+{RETAINED_PERSONALIZATION_PIPELINE.strip()}
+"""
 
 
 def _build_qa_integration(quiz_qas: list) -> str:

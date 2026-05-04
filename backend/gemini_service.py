@@ -135,13 +135,14 @@ def personalize_content(
     user_level: str,
     previous_quiz_feedback: str | None = None,
     last_topic_recap: str | None = None,
+    output_language: str = "en",
 ) -> str:
     """
     Call Gemini to personalize base content for the user's level and context.
     Returns personalized Markdown content.
     """
     client = get_client()
-    system = build_personalization_system_prompt(user_level)
+    system = build_personalization_system_prompt(user_level, output_language=output_language)
     user_prompt = build_personalization_user_prompt(
         topic_name=topic_name,
         base_content=base_content,
@@ -149,6 +150,7 @@ def personalize_content(
         user_level=user_level,
         previous_quiz_feedback=previous_quiz_feedback,
         last_topic_recap=last_topic_recap,
+        output_language=output_language,
     )
     print(f"[Gemini Personalize] Topic='{topic_name}', Level='{user_level}', BaseLen={len(base_content)}, QAs={len(quiz_qas)}")
     response = client.models.generate_content(
