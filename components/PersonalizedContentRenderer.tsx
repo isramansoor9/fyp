@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -14,187 +14,28 @@ type ResourceItem = {
 
 type Flashcard = {
   front: string;
+  /** Short preview for grid tiles */
   back: string;
-  tag: string;
+  /** Full answer text for expanded modal */
+  backFull: string;
 };
 
 type ContentSection = {
   id: string;
   title: string;
   body: string;
-  icon: SectionIconKey;
 };
-
-type SectionIconKey =
-  | "overview"
-  | "objectives"
-  | "explanation"
-  | "keyterms"
-  | "diagnostic"
-  | "faults"
-  | "practice"
-  | "safety"
-  | "summary"
-  | "default";
 
 type Props = {
   content: string;
 };
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ─── Constants (aligned with curriculum / learn table browns) ───────────────
 
 const RESOURCE_HEADING = "### Personalized Recommendation Resources";
 
-// ─── Section Icon Mapping ───────────────────────────────────────────────────
-
-function classifySection(title: string): SectionIconKey {
-  const t = title.toLowerCase();
-  if (t.includes("overview") || t.includes("prerequisite") || t.includes("technical")) return "overview";
-  if (t.includes("learning objective") || t.includes("objective")) return "objectives";
-  if (t.includes("explanation") || t.includes("operational") || t.includes("system-level") || t.includes("concept")) return "explanation";
-  if (t.includes("key term") || t.includes("definition") || t.includes("glossary") || t.includes("terminology")) return "keyterms";
-  if (t.includes("diagnostic") || t.includes("procedure") || t.includes("step") || t.includes("troubleshoot") || t.includes("fault")) return "faults";
-  if (t.includes("practice") || t.includes("exercise") || t.includes("activity") || t.includes("test") || t.includes("assessment")) return "practice";
-  if (t.includes("safety") || t.includes("precaution") || t.includes("warning")) return "safety";
-  if (t.includes("summary") || t.includes("conclusion") || t.includes("review")) return "summary";
-  if (t.includes("introduction") || t.includes("intro")) return "overview";
-  return "default";
-}
-
-type IconConfig = {
-  bg: string;
-  border: string;
-  accent: string;
-  iconColor: string;
-  svg: React.ReactNode;
-};
-
-function getSectionIcon(key: SectionIconKey): IconConfig {
-  const configs: Record<SectionIconKey, IconConfig> = {
-    overview: {
-      bg: "bg-slate-50",
-      border: "border-slate-200",
-      accent: "border-l-slate-600",
-      iconColor: "text-slate-600",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <path d="M10 2L2 7l8 5 8-5-8-5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M2 13l8 5 8-5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
-    objectives: {
-      bg: "bg-blue-50",
-      border: "border-blue-100",
-      accent: "border-l-blue-500",
-      iconColor: "text-blue-600",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5" />
-          <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M10 2v2M10 16v2M2 10h2M16 10h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    explanation: {
-      bg: "bg-violet-50",
-      border: "border-violet-100",
-      accent: "border-l-violet-500",
-      iconColor: "text-violet-600",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <path d="M10 2a8 8 0 100 16A8 8 0 0010 2z" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M10 9v5M10 6v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    keyterms: {
-      bg: "bg-amber-50",
-      border: "border-amber-100",
-      accent: "border-l-amber-500",
-      iconColor: "text-amber-600",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    diagnostic: {
-      bg: "bg-cyan-50",
-      border: "border-cyan-100",
-      accent: "border-l-cyan-500",
-      iconColor: "text-cyan-600",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M13.5 13.5L17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    faults: {
-      bg: "bg-red-50",
-      border: "border-red-100",
-      accent: "border-l-red-400",
-      iconColor: "text-red-500",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <path d="M10 3L2 17h16L10 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M10 8v4M10 14v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    practice: {
-      bg: "bg-emerald-50",
-      border: "border-emerald-100",
-      accent: "border-l-emerald-500",
-      iconColor: "text-emerald-600",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <path d="M4 5h12M4 10h8M4 15h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <circle cx="16" cy="15" r="2" stroke="currentColor" strokeWidth="1.5" />
-        </svg>
-      ),
-    },
-    safety: {
-      bg: "bg-orange-50",
-      border: "border-orange-100",
-      accent: "border-l-orange-500",
-      iconColor: "text-orange-500",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-          <path d="M7 10l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-    },
-    summary: {
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      accent: "border-l-gray-700",
-      iconColor: "text-gray-700",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <path d="M5 7l2 2 4-4M5 13l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M14 8h2M14 14h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    default: {
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      accent: "border-l-gray-400",
-      iconColor: "text-gray-500",
-      svg: (
-        <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4">
-          <rect x="3" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M7 7h6M7 10h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-  };
-  return configs[key];
-}
+/** Table header brown — same as Course 1 learn `FOUNDATION_BROWN` */
+const HEADER_BROWN = "#968e8a";
 
 // ─── Content Section Parser ─────────────────────────────────────────────────
 
@@ -214,7 +55,6 @@ function parseContentIntoSections(markdown: string): ContentSection[] {
       id: `sec-${idCounter++}`,
       title,
       body,
-      icon: classifySection(title),
     });
     currentBody = [];
   };
@@ -234,7 +74,7 @@ function parseContentIntoSections(markdown: string): ContentSection[] {
 
   // If nothing was parsed (flat content with no headings), treat whole thing as one section
   if (sections.length === 0 && markdown.trim()) {
-    sections.push({ id: "sec-0", title: "Content", body: markdown.trim(), icon: "default" });
+    sections.push({ id: "sec-0", title: "Content", body: markdown.trim() });
   }
 
   return sections;
@@ -247,6 +87,35 @@ function getResourceKind(url: string): ResourceItem["kind"] {
   if (lower.includes("youtube.com") || lower.includes("youtu.be")) return "video";
   if (lower.includes("medium.com") || lower.includes("wikipedia.org")) return "article";
   return "resource";
+}
+
+/** Returns 11-char video id for standard YouTube / YouTube Shorts URLs, or null. */
+function extractYouTubeVideoId(raw: string): string | null {
+  try {
+    const u = new URL(raw.trim());
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    const isId = (s: string | undefined | null) => !!s && /^[a-zA-Z0-9_-]{11}$/.test(s);
+
+    if (host === "youtu.be") {
+      const id = u.pathname.split("/").filter(Boolean)[0];
+      return isId(id) ? id! : null;
+    }
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+      const parts = u.pathname.split("/").filter(Boolean);
+      if (parts[0] === "shorts" && isId(parts[1])) return parts[1];
+      if (parts[0] === "embed" && isId(parts[1])) return parts[1];
+      if (parts[0] === "live" && isId(parts[1])) return parts[1];
+      const v = u.searchParams.get("v");
+      return isId(v) ? v! : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function youtubeThumbnailUrl(videoId: string): string {
+  return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
 }
 
 function prettifyHostTitle(url: string): string {
@@ -331,9 +200,11 @@ function buildFlashcards(markdown: string): Flashcard[] {
   let currentBody: string[] = [];
 
   const pushCard = () => {
-    const bodyText = trimSummary(currentBody.join(" ").trim(), 260);
+    const rawBody = currentBody.join(" ").trim();
+    const bodyText = trimSummary(rawBody, 260);
+    const backFull = stripMarkdownSyntax(rawBody) || bodyText;
     if (!currentHeading || !bodyText) return;
-    cards.push({ front: currentHeading, back: bodyText, tag: "Key Concept" });
+    cards.push({ front: currentHeading, back: bodyText, backFull });
   };
 
   for (const raw of lines) {
@@ -360,34 +231,34 @@ function buildFlashcards(markdown: string): Flashcard[] {
     .split(/\n\s*\n/g)
     .map((p) => stripMarkdownSyntax(p))
     .filter((p) => p.length > 60);
-  return paragraphs.slice(0, 8).map((p, idx) => ({
-    front: `Revision Card ${idx + 1}`,
-    back: trimSummary(p, 260),
-    tag: "Quick Review",
-  }));
+  return paragraphs.slice(0, 8).map((p, idx) => {
+    const backFull = stripMarkdownSyntax(p) || trimSummary(p, 260);
+    return {
+      front: "Study point",
+      back: trimSummary(p, 260),
+      backFull,
+    };
+  });
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-function ResourceIcon({ kind }: { kind: ResourceItem["kind"] }) {
-  if (kind === "video") {
-    return (
-      <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M15 10.5L10.5 13.2V7.8L15 10.5Z" fill="currentColor" />
-        <rect x="3" y="5" width="14" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M17 9L21 7V14L17 12V9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  return (
-    <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7 4H17L21 8V20H7V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M17 4V8H21" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M10 12H18M10 15H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <rect x="3" y="6" width="4" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
+const proseLessonClass =
+  "prose prose-lg max-w-none text-gray-800 leading-relaxed " +
+  "[&_h1]:text-2xl [&_h1]:md:text-3xl [&_h1]:font-bold [&_h1]:text-gray-900 [&_h1]:mt-6 [&_h1]:mb-3 " +
+  "[&_h2]:text-xl [&_h2]:md:text-2xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-5 [&_h2]:mb-2.5 " +
+  "[&_h3]:text-lg [&_h3]:md:text-xl [&_h3]:font-semibold [&_h3]:text-gray-900 [&_h3]:mt-4 [&_h3]:mb-2 " +
+  "[&_h4]:text-base [&_h4]:md:text-lg [&_h4]:font-semibold [&_h4]:text-gray-900 " +
+  "[&_p]:my-3 [&_p]:text-base [&_p]:md:text-lg " +
+  "[&_ul]:my-3 [&_ol]:my-3 [&_li]:ml-6 [&_li]:my-1.5 [&_li]:text-base [&_li]:md:text-lg " +
+  "[&_strong]:font-semibold [&_strong]:text-gray-900 " +
+  "[&_code]:bg-[#ebe8e6] [&_code]:px-2 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm " +
+  "[&_blockquote]:border-l-4 [&_blockquote]:border-[#c3bebb] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-700 " +
+  "[&_hr]:hidden [&_hr]:m-0 [&_hr]:h-0 [&_hr]:border-0";
+
+const markdownComponents = {
+  hr: () => null,
+} as const;
 
 function SectionAccordion({
   section,
@@ -399,51 +270,169 @@ function SectionAccordion({
   index: number;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const cfg = getSectionIcon(section.icon);
+  const bodyZebra = index % 2 === 0 ? "bg-[#f5f4f3]" : "bg-[#e8e4e2]";
 
   return (
-    <div
-      className={`rounded-xl border ${cfg.border} border-l-4 ${cfg.accent} shadow-sm overflow-hidden transition-shadow duration-200 hover:shadow-md`}
-    >
+    <div className="rounded-xl border border-[#c3bebb]/40 overflow-hidden shadow-sm bg-[#ebe8e6]">
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors duration-150 ${
-          isOpen ? cfg.bg : "bg-white hover:" + cfg.bg
-        }`}
+        className="w-full flex items-center gap-4 px-5 py-4 md:px-6 md:py-5 text-left transition-colors duration-150 text-white hover:opacity-[0.97]"
+        style={{ backgroundColor: HEADER_BROWN }}
         aria-expanded={isOpen}
       >
-        {/* Section number badge */}
-        <span className="shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-gray-900 text-white text-[11px] font-bold tabular-nums">
-          {index + 1}
+        <span className="shrink-0 min-w-[2.25rem] text-lg md:text-xl font-bold tabular-nums text-white/90">
+          {index + 1}.
         </span>
-
-        {/* Icon */}
-        <span className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border ${cfg.border} ${cfg.bg} ${cfg.iconColor}`}>
-          {cfg.svg}
-        </span>
-
-        {/* Title */}
-        <span className="flex-1 text-sm font-semibold text-gray-900 leading-snug">{section.title}</span>
-
-        {/* Chevron */}
+        <span className="flex-1 text-lg md:text-xl lg:text-2xl font-bold leading-snug pr-2">{section.title}</span>
         <span
-          className={`shrink-0 transition-transform duration-200 text-gray-400 ${isOpen ? "rotate-180" : ""}`}
+          className={`shrink-0 transition-transform duration-200 text-white/90 ${isOpen ? "rotate-180" : ""}`}
           aria-hidden="true"
         >
-          <svg viewBox="0 0 20 20" fill="none" className="w-5 h-5">
-            <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg viewBox="0 0 20 20" fill="none" className="w-6 h-6 md:w-7 md:h-7">
+            <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
       </button>
 
       {isOpen && (
-        <div className={`px-5 pt-3 pb-5 ${cfg.bg} border-t ${cfg.border}`}>
-          <div className="prose prose-sm max-w-none text-gray-700 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-semibold [&_h4]:text-sm [&_h4]:font-semibold [&_p]:my-2.5 [&_ul]:my-3 [&_ol]:my-3 [&_li]:ml-5 [&_li]:my-1 [&_strong]:font-semibold [&_strong]:text-gray-900 [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600">
-            <ReactMarkdown>{section.body}</ReactMarkdown>
+        <div className={`px-5 py-5 md:px-7 md:py-7 border-t border-[#c3bebb]/35 ${bodyZebra}`}>
+          <div className={proseLessonClass}>
+            <ReactMarkdown components={markdownComponents}>{section.body}</ReactMarkdown>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ResourceCard({ resource }: { resource: ResourceItem }) {
+  const ytId = extractYouTubeVideoId(resource.url);
+  const kindLabel = resource.kind === "video" ? "Video" : resource.kind === "article" ? "Article" : "Link";
+
+  return (
+    <a
+      href={resource.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#c3bebb]/35 bg-[#faf8f7] shadow-sm transition-all duration-200 hover:border-[#968e8a]/55 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#968e8a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#ebe8e6]"
+    >
+      {ytId ? (
+        <div className="relative aspect-video w-full shrink-0 bg-[#2a2624]">
+          <img
+            src={youtubeThumbnailUrl(ytId)}
+            alt={`${resource.title} — YouTube thumbnail`}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+            decoding="async"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15" aria-hidden />
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-[#968e8a] shadow-lg ring-2 ring-white/80 transition-transform duration-200 group-hover:scale-110"
+            aria-hidden
+          >
+            <svg className="ml-0.5 h-7 w-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M8 5v14l11-7L8 5z" />
+            </svg>
+          </div>
+          <span className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-[2px]">
+            YouTube
+          </span>
+        </div>
+      ) : (
+        <div className="flex h-36 w-full shrink-0 flex-col items-center justify-center gap-2 border-b border-[#c3bebb]/30 bg-gradient-to-br from-[#e8e4e2] to-[#d4cfcc] px-4">
+          <span className="rounded-md border border-[#c3bebb]/45 bg-[#faf8f7]/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#5c5755]">
+            {kindLabel}
+          </span>
+        </div>
+      )}
+
+      <div className="flex flex-1 flex-col p-4 md:p-5">
+        <p className="text-base font-bold leading-snug text-gray-900 decoration-[#968e8a] underline-offset-2 group-hover:underline md:text-lg">
+          {resource.title}
+        </p>
+        {resource.description && (
+          <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-gray-700 md:text-base">{resource.description}</p>
+        )}
+        <p className="mt-auto truncate pt-3 font-mono text-[11px] text-[#5c5755] md:text-xs" title={resource.url}>
+          {resource.url}
+        </p>
+      </div>
+    </a>
+  );
+}
+
+function FlashcardModal({
+  card,
+  entered,
+  onClose,
+}: {
+  card: Flashcard;
+  entered: boolean;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Flashcard"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+        aria-label="Close flashcard"
+        onClick={onClose}
+      />
+      <div
+        className={`relative z-10 flex min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-2 border-[#c3bebb]/50 bg-white shadow-2xl transition-all duration-500 ease-out will-change-transform max-h-[min(88vh,52rem)] ${
+          entered ? "translate-y-0 scale-100 rotate-0 opacity-100" : "translate-y-10 scale-[0.88] rotate-[-8deg] opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="flex shrink-0 justify-end border-b border-[#c3bebb]/35 px-3 py-2.5 sm:px-4 sm:py-3"
+          style={{ backgroundColor: HEADER_BROWN }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-white transition-colors hover:bg-white/15 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white"
+            aria-label="Close"
+          >
+            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-5 py-6 sm:px-8 sm:py-8">
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: HEADER_BROWN }}>
+            Question
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-gray-900 sm:text-xl md:text-2xl">{card.front}</p>
+          <div className="my-6 border-t-2 border-[#c3bebb]/35 sm:my-7" aria-hidden />
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: HEADER_BROWN }}>
+            Answer
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-gray-800 sm:text-lg">{card.backFull}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -455,113 +444,81 @@ export default function PersonalizedContentRenderer({ content }: Props) {
   const sections = useMemo(() => parseContentIntoSections(mainMarkdown), [mainMarkdown]);
   const flashcards = useMemo(() => buildFlashcards(mainMarkdown), [mainMarkdown]);
   const [showFlashcards, setShowFlashcards] = useState(false);
-  const [flippedCards, setFlippedCards] = useState<Record<number, boolean>>({});
+  const [flashModalIndex, setFlashModalIndex] = useState<number | null>(null);
+  const [flashModalEntered, setFlashModalEntered] = useState(false);
 
-  const toggleCard = (idx: number) => {
-    setFlippedCards((prev) => ({ ...prev, [idx]: !prev[idx] }));
-  };
+  useEffect(() => {
+    if (flashModalIndex === null) {
+      setFlashModalEntered(false);
+      return;
+    }
+    setFlashModalEntered(false);
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setFlashModalEntered(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [flashModalIndex]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
 
       {/* ── Flashcard Panel ──────────────────────────────────────────────── */}
       {flashcards.length > 0 && (
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-gray-900 text-white flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 20 20" fill="none" className="w-4.5 h-4.5" aria-hidden="true">
-                  <rect x="2" y="5" width="16" height="11" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M6 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-gray-900">Flashcards</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Quick revision cards from this lesson</p>
-              </div>
+        <section className="rounded-2xl border border-[#c3bebb]/40 overflow-hidden shadow-sm bg-[#ebe8e6]">
+          <div
+            className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-5 py-4 md:px-6 md:py-5 border-b border-[#c3bebb]/35 text-white"
+            style={{ backgroundColor: HEADER_BROWN }}
+          >
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold tracking-tight">Flashcards</h3>
+              <p className="text-sm md:text-base text-white/90 mt-1 max-w-xl">
+                Quick revision cards from this lesson. Click a card to open it with the full answer.
+              </p>
             </div>
-            <div className="flex items-center gap-2.5">
-              <span className="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="inline-flex items-center rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white">
                 {flashcards.length} cards
               </span>
               <button
                 type="button"
                 onClick={() => setShowFlashcards((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition-colors shadow-sm"
+                className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-white text-gray-900 text-sm md:text-base font-bold hover:bg-[#f4f3f2] transition-colors shadow-md"
               >
-                {showFlashcards ? (
-                  <>
-                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" aria-hidden="true">
-                      <path d="M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    Hide
-                  </>
-                ) : (
-                  <>
-                    <svg viewBox="0 0 16 16" fill="none" className="w-3.5 h-3.5" aria-hidden="true">
-                      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                    Show
-                  </>
-                )}
+                {showFlashcards ? "Hide cards" : "Show cards"}
               </button>
             </div>
           </div>
 
           {showFlashcards && (
-            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50">
-              {flashcards.map((card, idx) => {
-                const isFlipped = !!flippedCards[idx];
-                return (
-                  <button
-                    key={`${card.front}-${idx}`}
-                    type="button"
-                    onClick={() => toggleCard(idx)}
-                    className="group h-52 text-left [perspective:1200px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 rounded-xl"
-                    aria-label={`Flip flashcard ${idx + 1}: ${card.front}`}
-                  >
-                    <div
-                      className={`relative h-full w-full rounded-xl border border-gray-200 shadow-sm transition-[transform,box-shadow,border-color] duration-300 [transform-style:preserve-3d] ${
-                        isFlipped ? "[transform:rotateY(180deg)]" : ""
-                      } group-hover:shadow-md group-hover:border-gray-300`}
-                    >
-                      {/* Front */}
-                      <div className="absolute inset-0 rounded-xl bg-white p-5 [backface-visibility:hidden]">
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="inline-flex px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-600 border border-gray-200">
-                            {card.tag}
-                          </span>
-                          <span className="text-xs text-gray-400 font-mono">{idx + 1}</span>
-                        </div>
-                        <div className="h-[calc(100%-2.5rem)] mt-4 flex items-center">
-                          <p className="text-base font-semibold text-gray-900 leading-snug">{card.front}</p>
-                        </div>
-                      </div>
-                      {/* Back */}
-                      <div className="absolute inset-0 rounded-xl bg-gray-900 p-5 text-white [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="inline-flex px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-white/10 text-gray-200 border border-white/20">
-                            Details
-                          </span>
-                          <span className="text-xs text-gray-400 font-mono">{idx + 1}</span>
-                        </div>
-                        <div className="mt-4 h-[calc(100%-2.5rem)] overflow-y-auto pr-1">
-                          <p className="text-sm leading-relaxed text-gray-200 whitespace-pre-wrap">{card.back}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-1 gap-4 bg-[#ebe8e6] p-5 sm:grid-cols-2 md:gap-5 md:p-6 lg:grid-cols-3">
+              {flashcards.map((card, idx) => (
+                <button
+                  key={`${card.front}-${idx}`}
+                  type="button"
+                  onClick={() => setFlashModalIndex(idx)}
+                  className="group flex min-h-[10.5rem] flex-col rounded-xl border border-[#c3bebb]/40 bg-white p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#968e8a] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#968e8a] md:min-h-[11rem] md:p-5"
+                  aria-label={`Open flashcard: ${card.front}`}
+                >
+                  <p className="line-clamp-3 text-base font-bold leading-snug text-gray-900 md:text-lg">{card.front}</p>
+                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-600 md:text-base">{card.back}</p>
+                </button>
+              ))}
             </div>
           )}
         </section>
       )}
 
+      {flashModalIndex !== null && flashcards[flashModalIndex] && (
+        <FlashcardModal
+          card={flashcards[flashModalIndex]}
+          entered={flashModalEntered}
+          onClose={() => setFlashModalIndex(null)}
+        />
+      )}
+
       {/* ── Content Sections ─────────────────────────────────────────────── */}
       {sections.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {sections.map((section, idx) => (
             <SectionAccordion
               key={section.id}
@@ -575,45 +532,25 @@ export default function PersonalizedContentRenderer({ content }: Props) {
 
       {/* ── Recommended Resources ────────────────────────────────────────── */}
       {resources.length > 0 && (
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-            <div className="w-9 h-9 rounded-lg bg-gray-900 text-white flex items-center justify-center shrink-0">
-              <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 3L3 7L12 11L21 7L12 3Z" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M6 9.5V14.5C6 16.7 8.7 18.5 12 18.5C15.3 18.5 18 16.7 18 14.5V9.5" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-gray-900">Recommended Learning Resources</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {helperText || "Curated resources to deepen your understanding of this topic."}
-              </p>
-            </div>
+        <section className="rounded-2xl border border-[#c3bebb]/40 overflow-hidden shadow-sm bg-[#ebe8e6]">
+          <div
+            className="px-5 py-4 md:px-6 md:py-5 border-b border-[#c3bebb]/35 text-white"
+            style={{ backgroundColor: HEADER_BROWN }}
+          >
+            <h3 className="text-xl md:text-2xl font-bold tracking-tight">Recommended learning resources</h3>
+            <p className="text-sm md:text-base text-white/90 mt-1.5 max-w-3xl leading-relaxed">
+              {helperText || "Curated links to deepen your understanding of this topic."}
+            </p>
           </div>
-          <div className="p-4 grid grid-cols-1 gap-2.5">
-            {resources.map((resource, idx) => (
-              <a
-                key={`${resource.url}-${idx}`}
-                href={resource.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3.5 transition-all duration-150 hover:bg-white hover:border-gray-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
-              >
-                <div className="mt-0.5 w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0 shadow-sm">
-                  <ResourceIcon kind={resource.kind} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-gray-900 group-hover:text-black transition-colors leading-snug">
-                    {resource.title}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">{resource.description}</p>
-                  <p className="text-[11px] text-gray-400 mt-1.5 truncate">{resource.url}</p>
-                </div>
-                <svg className="w-4 h-4 text-gray-400 mt-1 shrink-0 group-hover:text-gray-600 transition-colors" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M7 17L17 7M17 7H9M17 7V15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
-            ))}
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:gap-5 md:p-5 lg:grid-cols-3">
+            {[...resources]
+              .sort((a, b) => {
+                const score = (r: ResourceItem) => (extractYouTubeVideoId(r.url) ? 1 : 0);
+                return score(b) - score(a);
+              })
+              .map((resource, idx) => (
+                <ResourceCard key={`${resource.url}-${idx}`} resource={resource} />
+              ))}
           </div>
         </section>
       )}

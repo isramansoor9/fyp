@@ -87,7 +87,9 @@ export function LandingNavbar({ rightPrefix }: LandingNavbarProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {rightPrefix ? <div className="hidden lg:flex items-center">{rightPrefix}</div> : null}
+          {rightPrefix ? (
+            <div className="hidden items-center gap-3 sm:gap-4 lg:flex">{rightPrefix}</div>
+          ) : null}
           {!isLoading && isLoggedIn && user ? (
             <Link
               href="/dashboard"
@@ -128,7 +130,10 @@ export function LandingNavbar({ rightPrefix }: LandingNavbarProps) {
           className="lg:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-0.5 shadow-inner max-h-[min(70vh,calc(100dvh-5rem))] overflow-y-auto"
         >
           {rightPrefix ? (
-            <div className="pb-3 mb-2 border-b border-gray-100" onClick={() => setMenuOpen(false)}>
+            <div
+              className="mb-2 flex flex-wrap items-center gap-3 border-b border-gray-100 pb-3 sm:gap-4"
+              onClick={() => setMenuOpen(false)}
+            >
               {rightPrefix}
             </div>
           ) : null}

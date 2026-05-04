@@ -59,11 +59,9 @@ const TIP_HOLD_SECONDS = 7.5;
 
 export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
   const n = BILINGUAL_TIPS.length;
-  // Fixed initial index so server HTML matches the client; randomize only after mount.
-  const [tipIndex, setTipIndex] = useState(0);
+  const [tipIndex, setTipIndex] = useState(() => Math.floor(Math.random() * BILINGUAL_TIPS.length));
 
   useEffect(() => {
-    setTipIndex(Math.floor(Math.random() * n));
     const id = setInterval(
       () => setTipIndex((i) => (i + 1) % n),
       TIP_HOLD_SECONDS * 1000
@@ -82,37 +80,37 @@ export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
   return (
     <div
       className={`min-h-screen flex flex-col items-center justify-start sm:justify-center px-5 sm:px-10 py-12 sm:py-16 lg:py-20 select-none
-        bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-800
+        bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-black
         ${urdu ? `${urduFont.className} urdu-text` : ""}`}
     >
       <div className="w-full max-w-2xl lg:max-w-3xl mx-auto flex flex-col items-center">
-        <h1 className="text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-8 sm:mb-10 lg:mb-11 px-2 leading-snug">
+        <h1 className="text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-black tracking-tight mb-8 sm:mb-10 lg:mb-11 px-2 leading-snug">
           {heading}
         </h1>
 
         <div
-          className="w-full rounded-3xl border-2 border-gray-200/90 bg-[#faf9f8] shadow-[0_12px_40px_-14px_rgba(60,52,46,0.22)]
+          className="w-full rounded-3xl border border-gray-300 bg-white shadow-sm
           px-7 py-9 sm:px-10 sm:py-11 lg:px-12 lg:py-12 min-h-[12rem] sm:min-h-[14rem]"
         >
-          <p className="text-xl sm:text-2xl lg:text-[1.75rem] font-semibold text-[#968e8a] mb-6 sm:mb-7 lg:mb-8 text-center normal-case tracking-normal">
+          <p className="text-xl sm:text-2xl lg:text-[1.75rem] font-semibold text-gray-700 mb-6 sm:mb-7 lg:mb-8 text-center normal-case tracking-normal">
             {labelDidYouKnow}
           </p>
 
           <div className="relative min-h-[7rem] sm:min-h-[8.5rem] lg:min-h-[9.5rem]">
             <p
               key={tipIndex}
-              className="text-lg sm:text-xl lg:text-2xl leading-relaxed lg:leading-snug text-gray-700 text-center"
+              className="text-lg sm:text-xl lg:text-2xl leading-relaxed lg:leading-snug text-gray-800 text-center"
             >
               {line}
             </p>
           </div>
 
-          <div className="mt-8 sm:mt-10 pt-7 sm:pt-8 border-t-2 border-gray-200/80">
+          <div className="mt-8 sm:mt-10 pt-7 sm:pt-8 border-t border-gray-200">
             <div className="flex justify-center gap-2 flex-wrap pb-2">
               {dots.map((active, i) => (
                 <span
                   key={i}
-                  className={`h-2.5 sm:h-3 rounded-full ${active ? "w-11 sm:w-12 bg-[#968e8a]" : "w-2.5 sm:w-3 bg-gray-300"}`}
+                  className={`h-2.5 sm:h-3 rounded-full ${active ? "w-11 sm:w-12 bg-[#6f6461]" : "w-2.5 sm:w-3 bg-gray-300"}`}
                   aria-hidden
                 />
               ))}
