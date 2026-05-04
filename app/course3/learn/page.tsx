@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronRight, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
+import { backendUrl } from "@/lib/backendUrl";
 import { isUrdu } from "@/lib/uiLanguage";
 import { TocBilingualLabel } from "@/lib/tocUrduDisplay";
 import { COURSE3_TOC_URDU } from "@/lib/tocUrdu/course3TocUrdu";
@@ -123,7 +124,7 @@ export default function Course3LearnPage() {
           );
           const initCtl = new AbortController();
           const initDeadline = window.setTimeout(() => initCtl.abort(), PROGRESS_FETCH_MS);
-          fetch("http://localhost:5000/api/user/course-progress/init", {
+          fetch(backendUrl("/api/user/course-progress/init"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -207,7 +208,7 @@ export default function Course3LearnPage() {
       const ctl = new AbortController();
       const deadline = window.setTimeout(() => ctl.abort(), PROGRESS_FETCH_MS);
 
-      fetch("http://localhost:5000/api/user/course-progress", {
+      fetch(backendUrl("/api/user/course-progress"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

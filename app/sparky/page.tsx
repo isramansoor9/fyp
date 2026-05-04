@@ -9,8 +9,9 @@ import { isUrdu } from "@/lib/uiLanguage";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import ReactMarkdown from "react-markdown";
 import { SpeakButton } from "@/components/SpeakButton";
+import { getBackendBaseUrl } from "@/lib/backendUrl";
 
-const API = "http://localhost:5000";
+const API = getBackendBaseUrl();
 
 type SessionRow = {
   dateKey: string;

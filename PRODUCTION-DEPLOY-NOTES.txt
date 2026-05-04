@@ -7,29 +7,11 @@ Last updated: session summary (localhost revert + full feature list).
 
 A) FRONTEND: configurable API base (instead of hardcoded localhost)
 -------------------------------------------------------------------
-Currently the Next.js app uses **http://localhost:5000** directly in `fetch(...)` across many files.
+The Next.js app resolves the Flask origin via **`lib/backendUrl.ts`**: **`NEXT_PUBLIC_API_URL`** when set, otherwise **`http://localhost:5000`** for local dev.
 
-To support production without editing dozens of URLs:
+1) **`lib/backendUrl.ts`** provides `getBackendBaseUrl()` and `backendUrl(path)`.
 
-1) Add a new file: **lib/backendUrl.ts**
-
---- copy below into lib/backendUrl.ts ---
-/**
- * Flask backend origin (no trailing slash).
- * Production: set NEXT_PUBLIC_API_URL in Vercel / .env.local, e.g. https://fyp-1xcl.onrender.com
- */
-export function getBackendBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000").trim().replace(/\/+$/, "");
-}
-
-/** Absolute URL for an API path (path must start with `/`, e.g. `/api/login`). */
-export function backendUrl(path: string): string {
-  const p = path.startsWith("/") ? path : `/${path}`;
-  return `${getBackendBaseUrl()}${p}`;
-}
---- end file ---
-
-2) Replace **http://localhost:5000** with **backendUrl("/api/...")** or **getBackendBaseUrl()** in these files (import from `@/lib/backendUrl`):
+2) **http://localhost:5000** has been replaced with **backendUrl("/api/...")** or **getBackendBaseUrl()** in these files (import from `@/lib/backendUrl`):
 
   - app/login/page.tsx          → backendUrl("/api/login")
   - app/register/page.tsx       → backendUrl("/api/register")
@@ -99,6 +81,7 @@ Requires **GEMINI_API_KEY** on the server for real Urdu generation (fallback is 
 
 E) FILES THAT ONLY EXIST OR WERE CHANGED IN THIS WORKSTREAM
 ------------------------------------------------------------
+  - lib/backendUrl.ts             (API base URL helper)
   - PRODUCTION-DEPLOY-NOTES.txt   (this file)
   - .env.example                  (optional comments; production uses Vercel env)
   - README.md                     (local vs production pointer to this file)
@@ -109,7 +92,7 @@ F) QUICK DEPLOY CHECKLIST
 [ ] Render: set CORS_ORIGIN (comma-separated origins, no trailing slash on Vercel URL)
 [ ] Render: MONGODB_URI, GEMINI_API_KEY, PORT if needed, Gunicorn command
 [ ] Vercel: NEXT_PUBLIC_API_URL = https://your-render-service.onrender.com
-[ ] Re-apply section A if the repo still uses literal localhost in fetch()
+[ ] Grep the repo for `localhost:5000` in `app/` and `components/` (should only appear as the dev fallback in `lib/backendUrl.ts`)
 [ ] Redeploy both services; verify browser Network tab shows API calls to Render, not localhost
 [ ] Confirm Render logs show `[CORS] Allowed origins` including your Vercel URL
 

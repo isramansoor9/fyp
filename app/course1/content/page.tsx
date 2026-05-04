@@ -8,6 +8,7 @@ import { LandingNavbar } from "@/app/components/LandingNavbar";
 import QuizModal from "@/components/QuizModal";
 import ContentLoader from "@/components/ContentLoader";
 import PersonalizedContentRenderer from "@/components/PersonalizedContentRenderer";
+import { backendUrl } from "@/lib/backendUrl";
 import { isUrdu } from "@/lib/uiLanguage";
 
 type ContentState = {
@@ -72,7 +73,7 @@ function ContentView() {
         // 1) Fast path: fetch already stored user subtopic content first
         if (userId || userEmail) {
           const subtopicRes = await fetch(
-            `http://localhost:5000/api/subtopic/${encodeURIComponent(titleParam)}?course=${encodeURIComponent("Course 1")}&userId=${encodeURIComponent(userId || "")}&email=${encodeURIComponent(userEmail || "")}`
+            `${backendUrl(`/api/subtopic/${encodeURIComponent(titleParam)}`)}?course=${encodeURIComponent("Course 1")}&userId=${encodeURIComponent(userId || "")}&email=${encodeURIComponent(userEmail || "")}`
           );
           if (subtopicRes.ok) {
             const subtopicData = await subtopicRes.json();
@@ -93,7 +94,7 @@ function ContentView() {
                 error: null,
               });
               // Touch status timestamp
-              fetch("http://localhost:5000/api/user/subtopic/status", {
+              fetch(backendUrl("/api/user/subtopic/status"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -129,7 +130,7 @@ function ContentView() {
             );
             const qaData = await qaRes.json();
             const quizQAs = qaData.quizQAs ?? qaData.questions ?? [];
-            const personalizeRes = await fetch("http://localhost:5000/api/personalize/content", {
+            const personalizeRes = await fetch(backendUrl("/api/personalize/content"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -158,7 +159,7 @@ function ContentView() {
 
         if (u && contentData.title) {
           try {
-            await fetch("http://localhost:5000/api/user/subtopic/status", {
+            await fetch(backendUrl("/api/user/subtopic/status"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -171,7 +172,7 @@ function ContentView() {
               }),
             });
             window.dispatchEvent(new Event("teachus:progress-updated"));
-            await fetch("http://localhost:5000/api/user/progress", {
+            await fetch(backendUrl("/api/user/progress"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

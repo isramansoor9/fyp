@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { backendUrl } from "@/lib/backendUrl";
 
 const PAKISTAN_CITIES = [
   "Karachi", "Lahore", "Faisalabad", "Rawalpindi", "Multan", "Hyderabad",
@@ -51,7 +52,7 @@ export default function RegisterPage() {
     setMessage(null);
 
     try {
-      const response = await fetch("http://localhost:5000/api/register", {
+      const response = await fetch(backendUrl("/api/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, preferredLanguage: preferredLearningLanguage }),

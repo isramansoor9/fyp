@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Clock, Calendar, Globe, TrendingUp, BarChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EnrollModal from "@/components/EnrollModal";
+import { backendUrl } from "@/lib/backendUrl";
 import { isUrdu } from "@/lib/uiLanguage";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 
@@ -32,7 +33,7 @@ export default function Course2() {
     const u = user as { userId?: string; email?: string };
     setEnrolling(true);
     try {
-      const res = await fetch("http://localhost:5000/api/enroll", {
+      const res = await fetch(backendUrl("/api/enroll"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: u.userId, email: u.email, course: COURSE_NAME }),

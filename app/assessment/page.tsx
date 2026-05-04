@@ -7,7 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
-const API = "http://localhost:5000";
+import { getBackendBaseUrl } from "@/lib/backendUrl";
+
+const API = getBackendBaseUrl();
 
 /** Matches curriculum / Sparky brown header */
 const HEADER_BROWN = "#968e8a";

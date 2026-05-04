@@ -22,9 +22,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Environment variables (frontend)
 
-Local development uses **`http://localhost:5000`** in the Next.js source for Flask API calls (no env var required for the default setup).
+API calls use **`lib/backendUrl.ts`**: `NEXT_PUBLIC_API_URL` when set (production), otherwise **`http://localhost:5000`** for local Flask.
 
-For **production** (Vercel + Render), follow **`PRODUCTION-DEPLOY-NOTES.txt`** in the repo root to re-apply the env-based API base URL and hosting checklist.
+For **production** (Vercel + Render), set **`NEXT_PUBLIC_API_URL`** to your backend origin (no trailing slash) and follow **`PRODUCTION-DEPLOY-NOTES.txt`** for CORS and the full checklist.
 
 ## Flask backend (API)
 
@@ -49,7 +49,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The API serves routes under `/api/...`. The local frontend calls `http://localhost:5000` directly.
+The API serves routes under `/api/...`. The Next.js app resolves the base URL via `getBackendBaseUrl()` / `backendUrl()` in `lib/backendUrl.ts`.
 
 ## Learn More
 

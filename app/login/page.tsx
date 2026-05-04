@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { backendUrl } from "@/lib/backendUrl";
 import { isUrdu } from "@/lib/uiLanguage";
 
 type FormState = {
@@ -32,7 +33,7 @@ function LoginForm() {
     setMessage(null);
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch(backendUrl("/api/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
