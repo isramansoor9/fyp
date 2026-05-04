@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -14,8 +14,10 @@ type ResourceItem = {
 
 type Flashcard = {
   front: string;
+  /** Short preview for grid tiles */
   back: string;
-  tag: string;
+  /** Full answer text for expanded modal */
+  backFull: string;
 };
 
 type ContentSection = {
@@ -198,9 +200,11 @@ function buildFlashcards(markdown: string): Flashcard[] {
   let currentBody: string[] = [];
 
   const pushCard = () => {
-    const bodyText = trimSummary(currentBody.join(" ").trim(), 260);
+    const rawBody = currentBody.join(" ").trim();
+    const bodyText = trimSummary(rawBody, 260);
+    const backFull = stripMarkdownSyntax(rawBody) || bodyText;
     if (!currentHeading || !bodyText) return;
-    cards.push({ front: currentHeading, back: bodyText, tag: "Key Concept" });
+    cards.push({ front: currentHeading, back: bodyText, backFull });
   };
 
   for (const raw of lines) {
@@ -227,11 +231,14 @@ function buildFlashcards(markdown: string): Flashcard[] {
     .split(/\n\s*\n/g)
     .map((p) => stripMarkdownSyntax(p))
     .filter((p) => p.length > 60);
-  return paragraphs.slice(0, 8).map((p, idx) => ({
-    front: `Revision Card ${idx + 1}`,
-    back: trimSummary(p, 260),
-    tag: "Quick Review",
-  }));
+  return paragraphs.slice(0, 8).map((p, idx) => {
+    const backFull = stripMarkdownSyntax(p) || trimSummary(p, 260);
+    return {
+      front: "Study point",
+      back: trimSummary(p, 260),
+      backFull,
+    };
+  });
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
@@ -246,7 +253,12 @@ const proseLessonClass =
   "[&_ul]:my-3 [&_ol]:my-3 [&_li]:ml-6 [&_li]:my-1.5 [&_li]:text-base [&_li]:md:text-lg " +
   "[&_strong]:font-semibold [&_strong]:text-gray-900 " +
   "[&_code]:bg-[#ebe8e6] [&_code]:px-2 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm " +
-  "[&_blockquote]:border-l-4 [&_blockquote]:border-[#c3bebb] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-700";
+  "[&_blockquote]:border-l-4 [&_blockquote]:border-[#c3bebb] [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-700 " +
+  "[&_hr]:hidden [&_hr]:m-0 [&_hr]:h-0 [&_hr]:border-0";
+
+const markdownComponents = {
+  hr: () => null,
+} as const;
 
 function SectionAccordion({
   section,
@@ -286,7 +298,7 @@ function SectionAccordion({
       {isOpen && (
         <div className={`px-5 py-5 md:px-7 md:py-7 border-t border-[#c3bebb]/35 ${bodyZebra}`}>
           <div className={proseLessonClass}>
-            <ReactMarkdown>{section.body}</ReactMarkdown>
+            <ReactMarkdown components={markdownComponents}>{section.body}</ReactMarkdown>
           </div>
         </div>
       )}
@@ -350,6 +362,81 @@ function ResourceCard({ resource }: { resource: ResourceItem }) {
   );
 }
 
+function FlashcardModal({
+  card,
+  entered,
+  onClose,
+}: {
+  card: Flashcard;
+  entered: boolean;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Flashcard"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+        aria-label="Close flashcard"
+        onClick={onClose}
+      />
+      <div
+        className={`relative z-10 flex min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-2xl border-2 border-[#c3bebb]/50 bg-white shadow-2xl transition-all duration-500 ease-out will-change-transform max-h-[min(88vh,52rem)] ${
+          entered ? "translate-y-0 scale-100 rotate-0 opacity-100" : "translate-y-10 scale-[0.88] rotate-[-8deg] opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="flex shrink-0 justify-end border-b border-[#c3bebb]/35 px-3 py-2.5 sm:px-4 sm:py-3"
+          style={{ backgroundColor: HEADER_BROWN }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-white transition-colors hover:bg-white/15 focus-visible:outline focus-visible:ring-2 focus-visible:ring-white"
+            aria-label="Close"
+          >
+            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-5 py-6 sm:px-8 sm:py-8">
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: HEADER_BROWN }}>
+            Question
+          </p>
+          <p className="mt-2 text-lg font-bold leading-snug text-gray-900 sm:text-xl md:text-2xl">{card.front}</p>
+          <div className="my-6 border-t-2 border-[#c3bebb]/35 sm:my-7" aria-hidden />
+          <p className="text-xs font-bold uppercase tracking-wide" style={{ color: HEADER_BROWN }}>
+            Answer
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-gray-800 sm:text-lg">{card.backFull}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
 export default function PersonalizedContentRenderer({ content }: Props) {
@@ -357,11 +444,20 @@ export default function PersonalizedContentRenderer({ content }: Props) {
   const sections = useMemo(() => parseContentIntoSections(mainMarkdown), [mainMarkdown]);
   const flashcards = useMemo(() => buildFlashcards(mainMarkdown), [mainMarkdown]);
   const [showFlashcards, setShowFlashcards] = useState(false);
-  const [flippedCards, setFlippedCards] = useState<Record<number, boolean>>({});
+  const [flashModalIndex, setFlashModalIndex] = useState<number | null>(null);
+  const [flashModalEntered, setFlashModalEntered] = useState(false);
 
-  const toggleCard = (idx: number) => {
-    setFlippedCards((prev) => ({ ...prev, [idx]: !prev[idx] }));
-  };
+  useEffect(() => {
+    if (flashModalIndex === null) {
+      setFlashModalEntered(false);
+      return;
+    }
+    setFlashModalEntered(false);
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setFlashModalEntered(true));
+    });
+    return () => cancelAnimationFrame(id);
+  }, [flashModalIndex]);
 
   return (
     <div className="space-y-7">
@@ -376,7 +472,7 @@ export default function PersonalizedContentRenderer({ content }: Props) {
             <div>
               <h3 className="text-xl md:text-2xl font-bold tracking-tight">Flashcards</h3>
               <p className="text-sm md:text-base text-white/90 mt-1 max-w-xl">
-                Quick revision cards built from this lesson. Tap a card to flip it.
+                Quick revision cards from this lesson. Click a card to open it with the full answer.
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -394,55 +490,30 @@ export default function PersonalizedContentRenderer({ content }: Props) {
           </div>
 
           {showFlashcards && (
-            <div className="p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 bg-[#ebe8e6]">
-              {flashcards.map((card, idx) => {
-                const isFlipped = !!flippedCards[idx];
-                const cardTint = idx % 2 === 0 ? "bg-[#faf8f7]" : "bg-[#f0ebe8]";
-                const backTint = idx % 2 === 0 ? "bg-[#e8e4e2]" : "bg-[#ddd8d5]";
-                return (
-                  <button
-                    key={`${card.front}-${idx}`}
-                    type="button"
-                    onClick={() => toggleCard(idx)}
-                    className="group min-h-[14rem] md:min-h-[15rem] text-left [perspective:1200px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#968e8a] rounded-xl"
-                    aria-label={`Flip flashcard ${idx + 1}: ${card.front}`}
-                  >
-                    <div
-                      className={`relative h-full min-h-[14rem] md:min-h-[15rem] w-full rounded-xl border border-[#c3bebb]/35 shadow-sm transition-[transform,box-shadow] duration-300 [transform-style:preserve-3d] ${
-                        isFlipped ? "[transform:rotateY(180deg)]" : ""
-                      } group-hover:shadow-md`}
-                    >
-                      <div className={`absolute inset-0 rounded-xl ${cardTint} p-5 md:p-6 [backface-visibility:hidden] border border-[#c3bebb]/25`}>
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide bg-[#ebe8e6] text-[#5c5755] border border-[#c3bebb]/40">
-                            {card.tag}
-                          </span>
-                          <span className="text-sm text-[#968e8a] font-bold tabular-nums">{idx + 1}</span>
-                        </div>
-                        <div className="mt-5 flex items-center min-h-[5rem]">
-                          <p className="text-lg md:text-xl font-bold text-gray-900 leading-snug">{card.front}</p>
-                        </div>
-                      </div>
-                      <div
-                        className={`absolute inset-0 rounded-xl ${backTint} p-5 md:p-6 text-gray-900 [transform:rotateY(180deg)] [backface-visibility:hidden] border border-[#c3bebb]/35`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="inline-flex px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wide bg-[#c3bebb]/25 text-[#5c5755] border border-[#c3bebb]/40">
-                            Answer
-                          </span>
-                          <span className="text-sm text-[#968e8a] font-bold tabular-nums">{idx + 1}</span>
-                        </div>
-                        <div className="mt-4 max-h-[11rem] overflow-y-auto pr-1">
-                          <p className="text-base md:text-lg leading-relaxed whitespace-pre-wrap">{card.back}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-1 gap-4 bg-[#ebe8e6] p-5 sm:grid-cols-2 md:gap-5 md:p-6 lg:grid-cols-3">
+              {flashcards.map((card, idx) => (
+                <button
+                  key={`${card.front}-${idx}`}
+                  type="button"
+                  onClick={() => setFlashModalIndex(idx)}
+                  className="group flex min-h-[10.5rem] flex-col rounded-xl border border-[#c3bebb]/40 bg-white p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#968e8a] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#968e8a] md:min-h-[11rem] md:p-5"
+                  aria-label={`Open flashcard: ${card.front}`}
+                >
+                  <p className="line-clamp-3 text-base font-bold leading-snug text-gray-900 md:text-lg">{card.front}</p>
+                  <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-600 md:text-base">{card.back}</p>
+                </button>
+              ))}
             </div>
           )}
         </section>
+      )}
+
+      {flashModalIndex !== null && flashcards[flashModalIndex] && (
+        <FlashcardModal
+          card={flashcards[flashModalIndex]}
+          entered={flashModalEntered}
+          onClose={() => setFlashModalIndex(null)}
+        />
       )}
 
       {/* ── Content Sections ─────────────────────────────────────────────── */}

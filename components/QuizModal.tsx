@@ -6,6 +6,8 @@ import { X, ChevronRight, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { backendUrl } from "@/lib/backendUrl";
 
+const HEADER_BROWN = "#968e8a";
+
 type QuizQuestion = { question: string; answer: string; difficulty: string };
 
 type QuizModalProps = {
@@ -148,15 +150,15 @@ export default function QuizModal({
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl"
+        className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-[#c3bebb]/50 bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full hover:bg-gray-100 transition z-10"
+          className="absolute top-5 right-5 z-10 rounded-full p-2 text-gray-600 transition hover:bg-[#f4f3f2] sm:top-6 sm:right-6"
           aria-label="Close"
         >
-          <X className="w-5 h-5 text-gray-500" />
+          <X className="h-5 w-5" />
         </button>
 
         {step === "prompt" && (
@@ -165,14 +167,15 @@ export default function QuizModal({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-black to-gray-700 flex items-center justify-center"
+              className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#c3bebb]/40 shadow-sm"
+              style={{ backgroundColor: HEADER_BROWN }}
             >
-              <BookOpen className="w-10 h-10 text-white" />
+              <BookOpen className="h-10 w-10 text-white" />
             </motion.div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+            <h2 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">
               {urdu ? "فوری کوئز کے لیے تیار ہیں؟" : "Ready for a Quick Quiz?"}
             </h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            <p className="mx-auto mb-8 max-w-md text-base leading-relaxed text-gray-700 md:text-lg">
               {urdu
                 ? `اپنی سطح کے مطابق 5 ذاتی سوالات کے ساتھ "${subtopicTitle}" کی سمجھ چیک کریں۔ سکون سے جواب دیں۔`
                 : `Test your understanding of "${subtopicTitle}" with 5 personalized questions based on your level. Take your time and answer thoughtfully.`}
@@ -183,7 +186,8 @@ export default function QuizModal({
             <button
               onClick={startQuiz}
               disabled={loading}
-              className="inline-flex items-center gap-2 bg-black text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 transition-all duration-300 hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
+              className="inline-flex items-center gap-2 rounded-xl px-8 py-4 text-base font-bold text-white shadow-lg transition-all duration-300 hover:opacity-95 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70 md:text-lg"
+              style={{ backgroundColor: HEADER_BROWN }}
             >
               {loading ? (
                 <>
@@ -202,7 +206,7 @@ export default function QuizModal({
 
         {step === "quiz" && (
           <div className="p-8 md:p-12">
-            <h2 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b">
+            <h2 className="mb-6 text-xl font-bold text-gray-900 md:text-2xl">
               {urdu ? "کوئز:" : "Quiz:"} {subtopicTitle}
             </h2>
             <div className="space-y-8">
@@ -213,34 +217,35 @@ export default function QuizModal({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
                 >
-                  <p className="text-sm font-medium text-gray-500 mb-1">
+                  <p className="mb-1 text-sm font-semibold md:text-base" style={{ color: HEADER_BROWN }}>
                   {urdu ? "سوال" : "Question"} {i + 1} · {q.difficulty}
                   </p>
-                  <p className="font-semibold text-gray-900 mb-3">{q.question}</p>
+                  <p className="mb-3 text-base font-semibold text-gray-900 md:text-lg">{q.question}</p>
                   <textarea
                   value={answers[i]}
                   onChange={(e) => updateAnswer(i, e.target.value)}
                   placeholder={urdu ? "اپنا جواب یہاں لکھیں..." : "Type your answer here..."}
-                  className="w-full min-h-[100px] px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-2 focus:ring-black/10 outline-none resize-y transition text-black placeholder-black"
+                  className="w-full min-h-[100px] resize-y rounded-xl border border-[#c3bebb]/45 bg-[#faf8f7] px-4 py-3 text-base text-gray-900 outline-none transition placeholder:text-gray-500 focus:border-[#968e8a] focus:ring-2 focus:ring-[#968e8a]/25 md:text-lg"
                   rows={4}
                   />
                 </motion.div>
                 ))}
             </div>
-            {error && <p className="text-red-600 text-sm mt-4">{error}</p>}
-            <div className="mt-8 flex gap-4">
+            {error && <p className="mt-4 text-sm text-red-600 md:text-base">{error}</p>}
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <button
                 onClick={onClose}
-                className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+                className="rounded-xl border border-[#c3bebb]/50 bg-white px-6 py-3 text-base font-semibold text-gray-800 transition hover:bg-[#f4f3f2] md:text-lg"
               >
                 {urdu ? "منسوخ کریں" : "Cancel"}
               </button>
               <button
                 onClick={submitQuiz}
-                className="flex-1 flex items-center justify-center gap-2 bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-all hover:scale-[1.02]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 text-base font-bold text-white transition hover:opacity-95 md:text-lg"
+                style={{ backgroundColor: HEADER_BROWN }}
               >
                 {urdu ? "کوئز جمع کریں" : "Submit Quiz"}
-                <CheckCircle2 className="w-5 h-5" />
+                <CheckCircle2 className="h-5 w-5 shrink-0" />
               </button>
             </div>
           </div>
@@ -248,8 +253,8 @@ export default function QuizModal({
 
         {step === "submitting" && (
           <div className="p-12 text-center">
-            <Loader2 className="w-16 h-16 mx-auto mb-4 text-black animate-spin" />
-            <p className="text-lg font-medium text-gray-700">{urdu ? "آپ کا کوئز جمع کیا جا رہا ہے..." : "Submitting your quiz..."}</p>
+            <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin" style={{ color: HEADER_BROWN }} />
+            <p className="text-lg font-medium text-gray-700 md:text-xl">{urdu ? "آپ کا کوئز جمع کیا جا رہا ہے..." : "Submitting your quiz..."}</p>
           </div>
         )}
 
@@ -259,16 +264,19 @@ export default function QuizModal({
             animate={{ scale: 1, opacity: 1 }}
             className="p-8 md:p-12 text-center"
           >
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle2 className="w-12 h-12 text-green-600" />
+            <div
+              className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-[#c3bebb]/35 bg-[#f4f3f2]"
+            >
+              <CheckCircle2 className="h-12 w-12" style={{ color: HEADER_BROWN }} />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">{urdu ? "کوئز جمع ہو گیا!" : "Quiz Submitted!"}</h2>
-            <p className="text-gray-600 mb-8">
+            <h2 className="mb-3 text-2xl font-bold text-gray-900 md:text-3xl">{urdu ? "کوئز جمع ہو گیا!" : "Quiz Submitted!"}</h2>
+            <p className="mb-8 text-base text-gray-600 md:text-lg">
               {urdu ? "آپ کے جوابات محفوظ ہو گئے ہیں۔ بہت خوب!" : "Your answers have been saved. Great job completing this quiz!"}
             </p>
             <button
               onClick={onClose}
-              className="bg-black text-white px-8 py-3 rounded-xl font-semibold hover:bg-gray-800 transition"
+              className="rounded-xl px-8 py-3 text-base font-bold text-white transition hover:opacity-95 md:text-lg"
+              style={{ backgroundColor: HEADER_BROWN }}
             >
               {urdu ? "بند کریں" : "Close"}
             </button>

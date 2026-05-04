@@ -336,50 +336,53 @@ export default function Home() {
         <h2 className="text-3xl font-bold mb-10">{urdu ? "ہماری سیکھنے والوں کی رائے" : "What Our Learners Say"}</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Testimonial 1 */}
-          <div className="p-6 rounded-xl border border-gray-200 shadow-sm bg-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:border-gray-300">
-            <p className="text-xl font-medium italic mb-6">
-              "A terrific piece of praise"
+          <div className="transform rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:scale-105 hover:border-gray-300 hover:shadow-2xl">
+            <p className="mb-6 text-lg font-medium italic leading-relaxed text-gray-900 md:text-xl">
+              {urdu
+                ? "“میں یوٹیوب سے جوڑ توڑ سیکھ رہا تھا۔ یہاں یونٹس واقعی ایک دوسرے پر بنتے ہیں—مجھے ڈائیگنوسٹکس سمجھ آ گئی، صرف اصطلاحیں نہیں۔”"
+                : "“I was piecing things together from random videos. Here the units actually stack—you learn diagnostics, not just jargon.”"}
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white font-bold">
-                N
-              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">H</div>
               <div>
-                <h4 className="font-semibold text-sm">Name</h4>
-                <p className="text-gray-500 text-xs">Description</p>
+                <h4 className="text-sm font-semibold">{urdu ? "حسن رضا" : "Hassan Raza"}</h4>
+                <p className="text-xs text-gray-500">
+                  {urdu ? "لاہور · الیکٹریشن کی تربیت" : "Lahore · Electrical trainee"}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Testimonial 2 */}
-          <div className="p-6 rounded-xl border border-gray-200 shadow-sm bg-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:border-gray-300">
-            <p className="text-xl font-medium italic mb-6">
-              "A fantastic bit of feedback"
+          <div className="transform rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:scale-105 hover:border-gray-300 hover:shadow-2xl">
+            <p className="mb-6 text-lg font-medium italic leading-relaxed text-gray-900 md:text-xl">
+              {urdu
+                ? "“مجھے صرف شام کا وقت ملتا تھا۔ سبق، کوئز، اور جب میں اٹک جاتا تو اسپارکی—سب ایک ہی جگہ ہونے کی وجہ سے یہ ممکن ہوا۔”"
+                : "“Evenings were all I had. Having lessons, quizzes, and Sparky when I got stuck in one place is what made it doable.”"}
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white font-bold">
-                N
-              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">F</div>
               <div>
-                <h4 className="font-semibold text-sm">Name</h4>
-                <p className="text-gray-500 text-xs">Description</p>
+                <h4 className="text-sm font-semibold">{urdu ? "فاطمہ نور" : "Fatima Noor"}</h4>
+                <p className="text-xs text-gray-500">
+                  {urdu ? "اسلام آباد · کام کے ساتھ سیکھنے والی" : "Islamabad · Learning alongside a day job"}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Testimonial 3 */}
-          <div className="p-6 rounded-xl border border-gray-200 shadow-sm bg-white transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:border-gray-300">
-            <p className="text-xl font-medium italic mb-6">
-              "A genuinely glowing review"
+          <div className="transform rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:scale-105 hover:border-gray-300 hover:shadow-2xl">
+            <p className="mb-6 text-lg font-medium italic leading-relaxed text-gray-900 md:text-xl">
+              {urdu
+                ? "“سپروائزر نے کہا کہ قومی معیار کے مطابق تیار مواد انٹرویو میں کام آئے گا۔ پہلے ورکشاپ انٹرویو پر کم گھبراہٹ تھی کیونکہ میں مکمل ماڈیول دکھا سکتا تھا۔”"
+                : "“Our supervisor said the aligned coursework would matter in interviews. I was less shaky in my first workshop visit because I could point to modules I actually finished.”"}
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white font-bold">
-                N
-              </div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black text-sm font-bold text-white">U</div>
               <div>
-                <h4 className="font-semibold text-sm">Name</h4>
-                <p className="text-gray-500 text-xs">Description</p>
+                <h4 className="text-sm font-semibold">{urdu ? "عثمان طارق" : "Usman Tariq"}</h4>
+                <p className="text-xs text-gray-500">
+                  {urdu ? "کراچی · کورس 2 مکمل" : "Karachi · Completed Course 2"}
+                </p>
               </div>
             </div>
           </div>
@@ -485,10 +488,26 @@ export default function Home() {
             <div className="md:col-span-3">
               <h4 className="font-semibold mb-4 uppercase tracking-wide text-sm text-[#4a3f3c]">Quick Links</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/course1" className="hover:text-[#6f6461] transition-colors">Courses</Link></li>
-                <li><Link href="/dashboard" className="hover:text-[#6f6461] transition-colors">User Dashboard</Link></li>
-                <li><Link href="/course1/content" className="hover:text-[#6f6461] transition-colors">Automated Assessment</Link></li>
-                <li><Link href="/course1/learn" className="hover:text-[#6f6461] transition-colors">Sparky</Link></li>
+                <li>
+                  <Link href="/#explore-courses" className="hover:text-[#6f6461] transition-colors">
+                    Courses
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/dashboard" className="hover:text-[#6f6461] transition-colors">
+                    User Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/assessment" className="hover:text-[#6f6461] transition-colors">
+                    Automated Assessment
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/sparky" className="hover:text-[#6f6461] transition-colors">
+                    Sparky
+                  </Link>
+                </li>
               </ul>
             </div>
 
