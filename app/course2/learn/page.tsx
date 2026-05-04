@@ -469,11 +469,20 @@ export default function Course2LearnPage() {
 
       <header className="px-6 pt-8 pb-10 sm:pb-12 max-w-7xl mx-auto">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 text-gray-900 leading-tight">
-          Course 2 <span className="text-[#968e8a]">Curriculum Explorer</span>
+          {urdu ? (
+            <>
+              کورس 2 <span className="text-[#968e8a]">نصاب کا جائزہ</span>
+            </>
+          ) : (
+            <>
+              Course 2 <span className="text-[#968e8a]">Curriculum Explorer</span>
+            </>
+          )}
         </h1>
         <p className={`${curriculumBodyTextClass} max-w-3xl`}>
-          Theory is listed first, then Practical, as per the course curriculum.
-          Expand a topic to see subtopics and click any subtopic to open its content.
+          {urdu
+            ? "نصاب کے مطابق پہلے نظریہ، پھر عملی ابواب درج ہیں۔ کسی موضوع کو کھولیں تو ذیلی موضوعات دکھائی دیں گے؛ کسی ذیلی موضوع پر کلک کریں تاکہ اس کا مواد کھلے۔"
+            : "Theory is listed first, then Practical, as per the course curriculum. Expand a topic to see subtopics and click any subtopic to open its content."}
         </p>
       </header>
 

@@ -454,18 +454,26 @@ export default function Course3LearnPage() {
 
       <header className="px-6 pt-8 pb-10 sm:pb-12 max-w-7xl mx-auto">
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 text-gray-900 leading-tight">
-          Course 3 <span className="text-[#968e8a]">Curriculum Explorer</span>
+          {urdu ? (
+            <>
+              کورس 3 <span className="text-[#968e8a]">نصاب کا جائزہ</span>
+            </>
+          ) : (
+            <>
+              Course 3 <span className="text-[#968e8a]">Curriculum Explorer</span>
+            </>
+          )}
         </h1>
         <p className={`${curriculumBodyTextClass} max-w-3xl mb-4`}>
-          Choose a semester. Theory modules are listed first, then Practical, using the same
-          table layout as Course 1 and Course 2. Expand a chapter to view lessons as some lessons
-          list nested items. Click a lesson to open its content (theory + practical combined).
+          {urdu
+            ? "اپنا سمسٹر منتخب کریں۔ کورس 1 اور 2 کی ہی طرز پر جدول میں پہلے نظریہ کے ماڈیول، پھر عملی درج ہیں۔ باب کھولیں تو اسباق دکھائی دیں گے؛ بعض اسباق میں ذیلی اندراجات ہیں۔ کسی سبق پر کلک کریں تاکہ مواد کھلے (نظری اور عملی اکٹھا)۔"
+            : "Choose a semester. Theory modules are listed first, then Practical, using the same table layout as Course 1 and Course 2. Expand a chapter to view lessons as some lessons list nested items. Click a lesson to open its content (theory + practical combined)."}
         </p>
 
         <div
           role="tablist"
           className="inline-flex rounded-xl bg-[#ebe8e6] p-1 border border-gray-200/70"
-          aria-label="Select semester"
+          aria-label={urdu ? "سمسٹر منتخب کریں" : "Select semester"}
         >
           <button
             role="tab"
@@ -477,7 +485,7 @@ export default function Course3LearnPage() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            Semester 1
+            {urdu ? "سمسٹر 1" : "Semester 1"}
           </button>
           <button
             role="tab"
@@ -489,7 +497,7 @@ export default function Course3LearnPage() {
                 : "text-gray-600 hover:text-gray-900"
             }`}
           >
-            Semester 2
+            {urdu ? "سمسٹر 2" : "Semester 2"}
           </button>
         </div>
       </header>

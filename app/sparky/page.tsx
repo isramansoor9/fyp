@@ -211,7 +211,7 @@ export default function SparkyPage() {
             style={{ backgroundColor: "#968e8a" }}
           >
             <div className="max-w-[calc(100%-7.5rem)] sm:max-w-[calc(100%-9rem)]">
-              <div className="flex flex-row items-center gap-3 sm:gap-4" dir={urdu ? "rtl" : "ltr"}>
+              <div className={`flex flex-row items-center gap-3 sm:gap-4 ${urdu ? 'flex-row-reverse' : ''}`} dir="ltr">
                 <Image
                   src={chatbotIcon}
                   alt={urdu ? "اسپارکی" : "Sparky"}
@@ -220,7 +220,7 @@ export default function SparkyPage() {
                   className="h-10 w-10 shrink-0 object-contain md:h-11 md:w-11 lg:h-12 lg:w-12"
                   priority
                 />
-                <div className={`min-w-0 flex-1 ${urdu ? "urdu-text" : ""}`}>
+                <div className="min-w-0 flex-1">
                   <h1 className="text-2xl font-bold tracking-tight md:text-3xl lg:text-4xl">
                     {urdu ? "اسپارکی" : "Sparky"}
                   </h1>
@@ -231,7 +231,7 @@ export default function SparkyPage() {
               </div>
             </div>
             <div className={`absolute top-4 sm:top-5 ${urdu ? "left-5 sm:left-7" : "right-5 sm:right-7"}`}>
-              <span className={`block ${urdu ? "text-left" : "text-right"} text-lg font-semibold tabular-nums text-white md:text-xl`}>
+              <span className="block text-left text-lg font-semibold tabular-nums text-white md:text-xl">
                 {selectedDateKey}
               </span>
             </div>
@@ -244,7 +244,7 @@ export default function SparkyPage() {
                   <>
                     <p className="mb-3 text-lg font-bold text-gray-900 md:text-xl">السلام علیکم</p>
                     <p>
-                      آٹو الیکٹریکل نظام، فالٹ ٹربل شوٹنگ، یا حفاظتی مشورہ اپنا سوال درج کریں۔
+                      آٹو الیکٹریکل نظام، فالٹ ٹربل شوٹنگ، یا حفاظتی مشورہ — اپنا سوال درج کریں۔
                     </p>
                   </>
                 ) : (

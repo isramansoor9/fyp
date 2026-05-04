@@ -36,12 +36,16 @@ body {
 /**
  * RTL + readable Urdu line-height. Latin uses Geist (same as English mode); Arabic uses
  * Noto Nastaliq via variable when Geist has no glyph.
+ *
+ * Urdu mode uses a larger base plus zoom so inherited text and Tailwind utilities
+ * (text-sm, md:text-lg, etc.) all read noticeably larger without editing every page.
  */
 .urdu-text {
   direction: rtl;
   text-align: right;
   line-height: 2.1;
-  font-size: 1.055em;
+  font-size: 1.35rem;
+  zoom: 1.18;
   font-family: var(--font-geist-sans), var(--font-geist-mono), ui-sans-serif, system-ui, sans-serif,
     var(--font-urdu-nastaliq), "Noto Nastaliq Urdu", serif;
 }
@@ -68,7 +72,7 @@ body {
 }
 
 .urdu-text .english-in-urdu {
-  font-size: calc(1em / 1.055);
+  font-size: 0.92em;
   padding-inline: 0.2em;
 }
 
@@ -76,7 +80,7 @@ body {
 .urdu-text pre {
   direction: ltr;
   unicode-bidi: isolate;
-  font-size: calc(1em / 1.055);
+  font-size: 0.9em;
   font-family: var(--font-geist-mono), ui-monospace, monospace;
   padding-inline: 0.2em;
 }
