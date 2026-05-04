@@ -9,7 +9,6 @@ import QuizModal from "@/components/QuizModal";
 import ContentLoader from "@/components/ContentLoader";
 import PersonalizedContentRenderer from "@/components/PersonalizedContentRenderer";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 
 type ContentState = {
   title: string | null;
@@ -254,7 +253,7 @@ function ContentView() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? "urdu-text" : ""}`}
     >
       <LandingNavbar
         rightPrefix={
@@ -272,7 +271,7 @@ function ContentView() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 pb-5 border-b border-[#c3bebb]/30 leading-tight tracking-tight">
             {state.title}
           </h1>
-          <PersonalizedContentRenderer content={state.content} />
+          <PersonalizedContentRenderer content={state.content} speechLang={urdu ? "ur-PK" : "en-US"} />
           {!quizCompleted && (
             <div className="mt-10 pt-8 border-t border-[#c3bebb]/25">
               <button

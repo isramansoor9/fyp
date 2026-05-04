@@ -22,7 +22,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), var(--font-geist-mono), ui-sans-serif, system-ui, sans-serif;
 }
 
 .no-scrollbar {
@@ -33,10 +33,17 @@ body {
   display: none;
 }
 
+/**
+ * RTL + readable Urdu line-height. Latin uses Geist (same as English mode); Arabic uses
+ * Noto Nastaliq via variable when Geist has no glyph.
+ */
 .urdu-text {
   direction: rtl;
   text-align: right;
   line-height: 2.1;
+  font-size: 1.055em;
+  font-family: var(--font-geist-sans), var(--font-geist-mono), ui-sans-serif, system-ui, sans-serif,
+    var(--font-urdu-nastaliq), "Noto Nastaliq Urdu", serif;
 }
 
 .urdu-text p,
@@ -51,4 +58,29 @@ body {
 .urdu-text label,
 .urdu-text button {
   line-height: 2.1;
+}
+
+/** Latin snippets: same sans stack as English mode; extra horizontal air only inside Urdu layout. */
+.english-in-urdu {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.urdu-text .english-in-urdu {
+  font-size: calc(1em / 1.055);
+  padding-inline: 0.2em;
+}
+
+.urdu-text code,
+.urdu-text pre {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-size: calc(1em / 1.055);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  padding-inline: 0.2em;
+}
+
+.urdu-text pre {
+  padding: 0.5em 0.35em;
 }

@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 import { DataCollectionChart } from "@/app/components/DataCollectionChartMain";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import logoTevta from "./images/tevta.png";
@@ -48,7 +47,7 @@ export default function Home() {
   ];
 
   return (
-    <div className={`min-h-screen bg-white text-black ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div className={`min-h-screen bg-white text-black ${urdu ? "urdu-text" : ""}`}>
       <LandingNavbar />
 
       {/* Hero Section */}

@@ -6,9 +6,9 @@ import chatbotIcon from "@/app/images/chatbot.png";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import ReactMarkdown from "react-markdown";
+import { SpeakButton } from "@/components/SpeakButton";
 
 const API = "http://localhost:5000";
 
@@ -133,7 +133,7 @@ export default function SparkyPage() {
   if (isLoading) {
     return (
       <div
-        className={`min-h-screen flex flex-col bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-800 ${urdu ? urduFont.className : ""}`}
+        className="min-h-screen flex flex-col bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-800"
       >
         <LandingNavbar />
         <div className="flex flex-1 items-center justify-center">
@@ -149,7 +149,7 @@ export default function SparkyPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? "urdu-text" : ""}`}
     >
       <LandingNavbar />
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:gap-8">
@@ -211,7 +211,7 @@ export default function SparkyPage() {
             style={{ backgroundColor: "#968e8a" }}
           >
             <div className="max-w-[calc(100%-7.5rem)] sm:max-w-[calc(100%-9rem)]">
-              <div className="flex flex-row items-center gap-3 sm:gap-4" dir="ltr">
+              <div className="flex flex-row items-center gap-3 sm:gap-4" dir={urdu ? "rtl" : "ltr"}>
                 <Image
                   src={chatbotIcon}
                   alt={urdu ? "اسپارکی" : "Sparky"}
@@ -230,8 +230,8 @@ export default function SparkyPage() {
                 </div>
               </div>
             </div>
-            <div className="absolute right-5 top-4 sm:right-7 sm:top-5">
-              <span className="block text-right text-lg font-semibold tabular-nums text-white md:text-xl">
+            <div className={`absolute top-4 sm:top-5 ${urdu ? "left-5 sm:left-7" : "right-5 sm:right-7"}`}>
+              <span className={`block ${urdu ? "text-left" : "text-right"} text-lg font-semibold tabular-nums text-white md:text-xl`}>
                 {selectedDateKey}
               </span>
             </div>
@@ -244,7 +244,7 @@ export default function SparkyPage() {
                   <>
                     <p className="mb-3 text-lg font-bold text-gray-900 md:text-xl">السلام علیکم</p>
                     <p>
-                      آٹو الیکٹریکل نظام، فالٹ ٹربل شوٹنگ، یا حفاظتی مشورہ — اپنا سوال درج کریں۔
+                      آٹو الیکٹریکل نظام، فالٹ ٹربل شوٹنگ، یا حفاظتی مشورہ اپنا سوال درج کریں۔
                     </p>
                   </>
                 ) : (
@@ -272,6 +272,17 @@ export default function SparkyPage() {
                         : "border-[#c3bebb]/45 bg-white text-gray-900 prose prose-lg max-w-none md:text-lg [&_p]:my-2 [&_li]:my-1"
                     }`}
                   >
+                    {!urdu ? (
+                      <div className={`mb-2 flex ${mine ? "justify-start" : "justify-end"}`}>
+                        <SpeakButton
+                          text={m.content}
+                          lang="en-US"
+                          variant={mine ? "onPrimary" : "default"}
+                          className="!h-9 !w-9"
+                          label="Listen"
+                        />
+                      </div>
+                    ) : null}
                     {!mine ? (
                       <ReactMarkdown>{m.content}</ReactMarkdown>
                     ) : (

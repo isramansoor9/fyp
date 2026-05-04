@@ -97,6 +97,60 @@ def _wanted_content_language(user: dict | None) -> str:
   pl = str(user.get("preferredLanguage") or "english").strip().lower()
   return "ur" if pl == "urdu" else "en"
 
+
+def _infer_content_language_from_text(body: str | None) -> str | None:
+  """
+  If `contentLanguage` was never stored (legacy rows), infer ur vs en from script mix
+  so we do not wipe Urdu cache as "English" and force regeneration.
+  """
+  if not body or not isinstance(body, str):
+    return None
+  sample = body[:14000]
+  alpha = sum(1 for c in sample if c.isalpha())
+  if alpha < 24:
+    return None
+  arabic_script = 0
+  for c in sample:
+    o = ord(c)
+    if (
+      0x0600 <= o <= 0x06FF
+      or 0x0750 <= o <= 0x077F
+      or 0x08A0 <= o <= 0x08FF
+      or 0xFB50 <= o <= 0xFDFF
+      or 0xFE70 <= o <= 0xFEFF
+    ):
+      arabic_script += 1
+  latin = sum(1 for c in sample if ("A" <= c <= "Z") or ("a" <= c <= "z"))
+  if arabic_script >= 18 and arabic_script / max(alpha, 1) >= 0.14:
+    return "ur"
+  if latin >= 40 and latin / max(alpha, 1) >= 0.5:
+    return "en"
+  return None
+
+
+def _effective_stored_content_language(doc: dict | None) -> str:
+  """Prefer explicit contentLanguage; else infer from stored HTML/Markdown body."""
+  if not doc:
+    return "en"
+  explicit = doc.get("contentLanguage")
+  if explicit in ("ur", "en"):
+    return explicit
+  body = doc.get("content") or ""
+  return _infer_content_language_from_text(body) or "en"
+
+
+def _maybe_backfill_content_language(doc: dict | None) -> None:
+  """Persist inferred language once for legacy documents (missing contentLanguage)."""
+  if not doc or doc.get("contentLanguage") in ("ur", "en"):
+    return
+  inferred = _infer_content_language_from_text(doc.get("content") or "")
+  if inferred not in ("ur", "en") or not doc.get("_id"):
+    return
+  try:
+    user_subtopics.update_one({"_id": doc["_id"]}, {"$set": {"contentLanguage": inferred}})
+  except Exception as e:
+    print(f"[user_subtopics] contentLanguage backfill skipped: {e}")
+
 def _subtopic_query(user_id: str, email: str, course: str, subtopic: str) -> dict:
   query = {"course": course, "subtopic": subtopic}
   if user_id:
@@ -1153,7 +1207,8 @@ def personalize_content():
   wanted_lang = _wanted_content_language(user)
   # Source of truth lookup (cache is language-specific)
   existing = user_subtopics.find_one({"userId": resolved_user_id, "course": course, "subtopic": subtopic_name})
-  stored_lang = (existing or {}).get("contentLanguage") or "en"
+  _maybe_backfill_content_language(existing)
+  stored_lang = _effective_stored_content_language(existing)
   if (
     existing
     and existing.get("contentGenerated")
@@ -1603,7 +1658,8 @@ def get_subtopic(subtopic_id: str):
 
   quiz = doc.get("quiz") if isinstance(doc.get("quiz"), dict) else {}
   wanted_lang = _wanted_content_language(user)
-  stored_lang = doc.get("contentLanguage") or "en"
+  _maybe_backfill_content_language(doc)
+  stored_lang = _effective_stored_content_language(doc)
   content_generated = bool(doc.get("contentGenerated"))
   raw_content = doc.get("content", "")
   # Force regeneration path on the client if stored lesson language != profile language

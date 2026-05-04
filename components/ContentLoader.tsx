@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { urduFont } from "@/lib/urduFont";
 
 /** One tip per slide; bilingual. No hyphen/em dash punctuation in copy. */
 const BILINGUAL_TIPS = [
@@ -81,7 +80,7 @@ export default function ContentLoader({ urdu = false }: { urdu?: boolean }) {
     <div
       className={`min-h-screen flex flex-col items-center justify-start sm:justify-center px-5 sm:px-10 py-12 sm:py-16 lg:py-20 select-none
         bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-black
-        ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+        ${urdu ? "urdu-text" : ""}`}
     >
       <div className="w-full max-w-2xl lg:max-w-3xl mx-auto flex flex-col items-center">
         <h1 className="text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-black tracking-tight mb-8 sm:mb-10 lg:mb-11 px-2 leading-snug">

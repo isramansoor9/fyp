@@ -6,7 +6,8 @@ import { ChevronRight, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
+import { TocBilingualLabel } from "@/lib/tocUrduDisplay";
+import { COURSE1_TOC_URDU } from "@/lib/tocUrdu/course1TocUrdu";
 
 interface Subtopic {
   id: string;
@@ -260,7 +261,12 @@ export default function Course1LearnPage() {
                   : "text-gray-800 hover:bg-[#eae4e2]/70 cursor-pointer"
               }`}
             >
-              <span className="line-clamp-4">{sub.title}</span>
+              <TocBilingualLabel
+                english={sub.title}
+                urdu={urdu}
+                map={COURSE1_TOC_URDU}
+                className="line-clamp-4"
+              />
             </button>
           </td>
           <td className={subtopicLockCellClass}>
@@ -273,7 +279,7 @@ export default function Course1LearnPage() {
 
   if (!toc) {
     return (
-      <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+      <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? "urdu-text" : ""}`}>
         <LandingNavbar />
         <main className="px-6 pb-16 max-w-7xl mx-auto pt-12">
           {loading && (
@@ -292,7 +298,7 @@ export default function Course1LearnPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? "urdu-text" : ""}`}>
       <LandingNavbar />
 
       <header className="px-6 pt-8 pb-10 sm:pb-12 max-w-7xl mx-auto">
@@ -310,16 +316,16 @@ export default function Course1LearnPage() {
         <section className={courseContentPanelClass}>
           <div className="p-4 md:p-5">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Theory</h2>
+              <h2 className="text-xl font-bold text-gray-900">{urdu ? "نظریہ" : "Theory"}</h2>
             </div>
             <div className="overflow-x-auto rounded-xl bg-[#ebe8e6]">
               <table className="w-full">
                 <thead>
                   <tr style={{ backgroundColor: FOUNDATION_BROWN }}>
-                    <th className={tableRefHeadClass}>Ref.</th>
-                    <th className={tableTopicHeadClass}>Topic</th>
+                    <th className={tableRefHeadClass}>{urdu ? "حوالہ" : "Ref."}</th>
+                    <th className={tableTopicHeadClass}>{urdu ? "عنوان" : "Topic"}</th>
                     <th className="text-right pl-2 pr-4 sm:pr-6 py-3 text-base font-bold text-white w-36 shrink-0">
-                      Lessons
+                      {urdu ? "اسباق" : "Lessons"}
                     </th>
                   </tr>
                 </thead>
@@ -340,11 +346,17 @@ export default function Course1LearnPage() {
                               <ChevronRight
                                 className={`w-4 h-4 text-[#968e8a] shrink-0 transform transition-transform duration-300 ${open ? "rotate-90" : ""}`}
                               />
-                              <span className="leading-snug">{topic.title}</span>
+                              <TocBilingualLabel
+                                english={topic.title}
+                                urdu={urdu}
+                                map={COURSE1_TOC_URDU}
+                                className="leading-snug"
+                              />
                             </button>
                           </td>
                           <td className="pl-2 pr-4 sm:pr-6 py-3 align-middle text-right tabular-nums text-[#5c5755] shrink-0">
-                            {topic.subtopics.length} subtopics
+                            {topic.subtopics.length}{" "}
+                            {urdu ? "ذیلی عنوانات" : "subtopics"}
                           </td>
                         </tr>
                         {open && renderSubtopicTableRows(topic, "theory")}
@@ -360,16 +372,16 @@ export default function Course1LearnPage() {
         <section className={courseContentPanelClass}>
           <div className="p-4 md:p-5">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Practical</h2>
+              <h2 className="text-xl font-bold text-gray-900">{urdu ? "عملی" : "Practical"}</h2>
             </div>
             <div className="overflow-x-auto rounded-xl bg-[#ebe8e6]">
               <table className="w-full">
                 <thead>
                   <tr style={{ backgroundColor: FOUNDATION_BROWN }}>
-                    <th className={tableRefHeadClass}>Ref.</th>
-                    <th className={tableTopicHeadClass}>Topic</th>
+                    <th className={tableRefHeadClass}>{urdu ? "حوالہ" : "Ref."}</th>
+                    <th className={tableTopicHeadClass}>{urdu ? "عنوان" : "Topic"}</th>
                     <th className="text-right pl-2 pr-4 sm:pr-6 py-3 text-base font-bold text-white w-36 shrink-0">
-                      Lessons
+                      {urdu ? "اسباق" : "Lessons"}
                     </th>
                   </tr>
                 </thead>
@@ -390,11 +402,17 @@ export default function Course1LearnPage() {
                               <ChevronRight
                                 className={`w-4 h-4 text-[#968e8a] shrink-0 transform transition-transform duration-300 ${open ? "rotate-90" : ""}`}
                               />
-                              <span className="leading-snug">{topic.title}</span>
+                              <TocBilingualLabel
+                                english={topic.title}
+                                urdu={urdu}
+                                map={COURSE1_TOC_URDU}
+                                className="leading-snug"
+                              />
                             </button>
                           </td>
                           <td className="pl-2 pr-4 sm:pr-6 py-3 align-middle text-right tabular-nums text-[#5c5755] shrink-0">
-                            {topic.subtopics.length} subtopics
+                            {topic.subtopics.length}{" "}
+                            {urdu ? "ذیلی عنوانات" : "subtopics"}
                           </td>
                         </tr>
                         {open && renderSubtopicTableRows(topic, "practical")}

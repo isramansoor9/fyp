@@ -6,7 +6,6 @@ import { Clock, Calendar, Globe, TrendingUp, BarChart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EnrollModal from "@/components/EnrollModal";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 
 const COURSE_NAME = "Course 1";
@@ -174,7 +173,7 @@ export default function Course1() {
   ];
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-600 ${urdu ? "urdu-text" : ""}`}>
       <LandingNavbar />
 
       {/* Hero Section */}

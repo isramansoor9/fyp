@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 const API = "http://localhost:5000";
@@ -122,7 +121,7 @@ export default function AssessmentPage() {
   if (isLoading) {
     return (
       <div
-        className={`min-h-screen flex flex-col bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-800 ${urdu ? urduFont.className : ""}`}
+        className="min-h-screen flex flex-col bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-800"
       >
         <LandingNavbar />
         <div className="flex flex-1 items-center justify-center">
@@ -137,7 +136,7 @@ export default function AssessmentPage() {
   if (!["Course 1", "Course 2", "Course 3"].includes(enrolled)) {
     return (
       <div
-        className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+        className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? "urdu-text" : ""}`}
       >
         <LandingNavbar />
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
@@ -163,7 +162,7 @@ export default function AssessmentPage() {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? `${urduFont.className} urdu-text` : ""}`}
+      className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? "urdu-text" : ""}`}
     >
       <LandingNavbar />
       <main className="mx-auto w-full max-w-[min(100%,1100px)] px-4 py-8 sm:px-6 md:px-7 lg:px-8">

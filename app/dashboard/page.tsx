@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth, getDisplayName } from "@/contexts/AuthContext";
 import { isUrdu, normalizeLanguage, type UILanguage } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 import { LandingNavbar } from "@/app/components/LandingNavbar";
 
 /** Matches Sparky / assessment brown theme */
@@ -162,7 +161,7 @@ export default function DashboardPage() {
     "";
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div className={`min-h-screen bg-gradient-to-b from-[#f3f0ee] via-[#e9e5e3] to-[#ddd8d5] text-gray-900 ${urdu ? "urdu-text" : ""}`}>
       <LandingNavbar
         rightPrefix={
           <>

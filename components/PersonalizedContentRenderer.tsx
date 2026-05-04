@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { SpeakButton } from "@/components/SpeakButton";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -28,11 +29,15 @@ type ContentSection = {
 
 type Props = {
   content: string;
+  /** Locale hint: Urdu (`ur-*`) hides lesson TTS; still drives Urdu UI labels for resources. English enables TTS. */
+  speechLang?: string;
 };
 
 // ─── Constants (aligned with curriculum / learn table browns) ───────────────
+// English (legacy) + Urdu heading from backend `_append_reference_resource_section`
 
-const RESOURCE_HEADING = "### Personalized Recommendation Resources";
+const RESOURCE_HEADINGS_EN = "### Personalized Recommendation Resources";
+const RESOURCE_HEADINGS_UR = "### ذاتی تجویز کردہ وسائل";
 
 /** Table header brown — same as Course 1 learn `FOUNDATION_BROWN` */
 const HEADER_BROWN = "#968e8a";
@@ -128,25 +133,51 @@ function prettifyHostTitle(url: string): string {
   }
 }
 
+function normalizeResourceLine(line: string): string {
+  return line.replace(/[\u200e\u200f\u202a-\u202e\u061c]/g, "").trim();
+}
+
 function parseMarkdownResourceLine(line: string): { title?: string; url?: string; description?: string } {
-  const markdownLink = line.match(/^\s*-\s*\[([^\]]+)\]\((https?:\/\/[^\)]+)\)\s*(?:-\s*(.+))?\s*$/i);
+  const raw = normalizeResourceLine(line);
+  // Markdown list: - or * ; link may contain non-ASCII title
+  const markdownLink = raw.match(
+    /^\s*[-*]\s*\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)\s*(?:[-–—]\s*(.+))?$/i
+  );
   if (markdownLink) {
-    return { title: markdownLink[1]?.trim(), url: markdownLink[2]?.trim(), description: markdownLink[3]?.trim() };
+    let url = markdownLink[2]?.trim() ?? "";
+    url = url.replace(/[),.;]+$/, "");
+    return {
+      title: markdownLink[1]?.trim() || undefined,
+      url,
+      description: markdownLink[3]?.trim(),
+    };
   }
-  const oldStyle = line.match(/^\s*>\s*\d+\.\s*([^:]+):\s*(https?:\/\/\S+)\s*$/i);
+  const oldStyle = raw.match(/^\s*>\s*\d+\.\s*([^:]+):\s*(https?:\/\/\S+)/i);
   if (oldStyle) {
-    return { title: oldStyle[1]?.trim(), url: oldStyle[2]?.trim(), description: "Recommended from your current learning context." };
+    return { title: oldStyle[1]?.trim(), url: oldStyle[2]?.trim().replace(/[),.;]+$/, ""), description: "Recommended from your current learning context." };
   }
-  const plainUrl = line.match(/(https?:\/\/\S+)/i);
-  if (plainUrl) {
-    return { url: plainUrl[1]?.trim(), description: "Recommended from your current learning context." };
+  // Plain URL on its own or after bullet text
+  const urls = raw.match(/https?:\/\/[^\s\)\]>'"]+/gi);
+  if (urls?.length) {
+    const url = urls[urls.length - 1].replace(/[),.;]+$/, "");
+    const titlePart = raw.replace(url, "").replace(/^\s*[-*]\s*/, "").replace(/[-–—]\s*$/, "").trim();
+    return {
+      url,
+      title: titlePart || undefined,
+      description: "Recommended from your current learning context.",
+    };
   }
   return {};
 }
 
+function isResourceSectionHeading(line: string): boolean {
+  const t = line.trim();
+  return t === RESOURCE_HEADINGS_EN || t === RESOURCE_HEADINGS_UR || t.startsWith(RESOURCE_HEADINGS_EN) || t.startsWith(RESOURCE_HEADINGS_UR);
+}
+
 function splitContentAndResources(raw: string): { mainMarkdown: string; helperText: string; resources: ResourceItem[] } {
   const lines = raw.split("\n");
-  const markerIndex = lines.findIndex((line) => line.trim() === RESOURCE_HEADING);
+  const markerIndex = lines.findIndex((line) => isResourceSectionHeading(line));
   if (markerIndex === -1) return { mainMarkdown: raw, helperText: "", resources: [] };
 
   const mainMarkdown = lines.slice(0, markerIndex).join("\n").trim();
@@ -155,8 +186,15 @@ function splitContentAndResources(raw: string): { mainMarkdown: string; helperTe
   let helperText = "";
   const resources: ResourceItem[] = [];
   for (const line of sectionLines) {
-    if (!helperText && !line.trim().startsWith("-") && !line.trim().startsWith(">")) {
-      helperText = line.trim();
+    const trimmed = normalizeResourceLine(line);
+    if (!trimmed) continue;
+    const looksLikeResource =
+      trimmed.startsWith("-") ||
+      trimmed.startsWith("*") ||
+      trimmed.startsWith(">") ||
+      /^https?:\/\//i.test(trimmed);
+    if (!helperText && !looksLikeResource) {
+      helperText = trimmed;
       continue;
     }
     const parsed = parseMarkdownResourceLine(line);
@@ -306,9 +344,10 @@ function SectionAccordion({
   );
 }
 
-function ResourceCard({ resource }: { resource: ResourceItem }) {
+function ResourceCard({ resource, isUrdu }: { resource: ResourceItem; isUrdu: boolean }) {
   const ytId = extractYouTubeVideoId(resource.url);
-  const kindLabel = resource.kind === "video" ? "Video" : resource.kind === "article" ? "Article" : "Link";
+  const kindLabel = resource.kind === "video" ? (isUrdu ? "ویڈیو" : "Video") : resource.kind === "article" ? (isUrdu ? "مضمون" : "Article") : isUrdu ? "لنک" : "Link";
+  const openLabel = isUrdu ? "باہر کھولیں (نیا ٹیب)" : "Open link (new tab)";
 
   return (
     <a
@@ -316,6 +355,7 @@ function ResourceCard({ resource }: { resource: ResourceItem }) {
       target="_blank"
       rel="noopener noreferrer"
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#c3bebb]/35 bg-[#faf8f7] shadow-sm transition-all duration-200 hover:border-[#968e8a]/55 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#968e8a] focus-visible:ring-offset-2 focus-visible:ring-offset-[#ebe8e6]"
+      title={openLabel}
     >
       {ytId ? (
         <div className="relative aspect-video w-full shrink-0 bg-[#2a2624]">
@@ -354,9 +394,10 @@ function ResourceCard({ resource }: { resource: ResourceItem }) {
         {resource.description && (
           <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-gray-700 md:text-base">{resource.description}</p>
         )}
-        <p className="mt-auto truncate pt-3 font-mono text-[11px] text-[#5c5755] md:text-xs" title={resource.url}>
+        <p className="mt-2 break-all font-mono text-[11px] leading-snug text-[#968e8a] underline-offset-2 group-hover:underline md:text-xs" title={resource.url}>
           {resource.url}
         </p>
+        <span className="mt-2 inline-block text-xs font-semibold text-[#968e8a]">{openLabel} →</span>
       </div>
     </a>
   );
@@ -439,10 +480,11 @@ function FlashcardModal({
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 
-export default function PersonalizedContentRenderer({ content }: Props) {
+export default function PersonalizedContentRenderer({ content, speechLang = "en-US" }: Props) {
   const { mainMarkdown, helperText, resources } = splitContentAndResources(content);
   const sections = useMemo(() => parseContentIntoSections(mainMarkdown), [mainMarkdown]);
   const flashcards = useMemo(() => buildFlashcards(mainMarkdown), [mainMarkdown]);
+  const isUrduUI = speechLang.toLowerCase().startsWith("ur");
   const [showFlashcards, setShowFlashcards] = useState(false);
   const [flashModalIndex, setFlashModalIndex] = useState<number | null>(null);
   const [flashModalEntered, setFlashModalEntered] = useState(false);
@@ -461,6 +503,15 @@ export default function PersonalizedContentRenderer({ content }: Props) {
 
   return (
     <div className="space-y-7">
+      {!isUrduUI ? (
+        <div className="flex justify-end">
+          <SpeakButton
+            text={mainMarkdown}
+            lang={speechLang}
+            label="Listen to lesson"
+          />
+        </div>
+      ) : null}
 
       {/* ── Flashcard Panel ──────────────────────────────────────────────── */}
       {flashcards.length > 0 && (
@@ -537,9 +588,14 @@ export default function PersonalizedContentRenderer({ content }: Props) {
             className="px-5 py-4 md:px-6 md:py-5 border-b border-[#c3bebb]/35 text-white"
             style={{ backgroundColor: HEADER_BROWN }}
           >
-            <h3 className="text-xl md:text-2xl font-bold tracking-tight">Recommended learning resources</h3>
+            <h3 className="text-xl md:text-2xl font-bold tracking-tight">
+              {isUrduUI ? "تجویز کردہ ذرائع" : "Recommended learning resources"}
+            </h3>
             <p className="text-sm md:text-base text-white/90 mt-1.5 max-w-3xl leading-relaxed">
-              {helperText || "Curated links to deepen your understanding of this topic."}
+              {helperText ||
+                (isUrduUI
+                  ? "یہ لنکس نئے ٹیب میں کھلیں گے۔ یوٹیوب ویڈیوز کے لیے تھمب نیل دکھایا گیا ہے۔"
+                  : "Curated links to deepen your understanding of this topic. YouTube items show thumbnails; all links open in a new tab.")}
             </p>
           </div>
           <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:gap-5 md:p-5 lg:grid-cols-3">
@@ -549,7 +605,7 @@ export default function PersonalizedContentRenderer({ content }: Props) {
                 return score(b) - score(a);
               })
               .map((resource, idx) => (
-                <ResourceCard key={`${resource.url}-${idx}`} resource={resource} />
+                <ResourceCard key={`${resource.url}-${idx}`} resource={resource} isUrdu={isUrduUI} />
               ))}
           </div>
         </section>

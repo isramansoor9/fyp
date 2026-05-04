@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isUrdu } from "@/lib/uiLanguage";
-import { urduFont } from "@/lib/urduFont";
 
 type FormState = {
   email: string;
@@ -71,7 +70,7 @@ function LoginForm() {
 
   return (
     <>
-    <div className={`min-h-screen bg-white text-black flex items-center justify-center px-4 py-10 sm:px-6 sm:py-12 ${urdu ? `${urduFont.className} urdu-text` : ""}`}>
+    <div className={`min-h-screen bg-white text-black flex items-center justify-center px-4 py-10 sm:px-6 sm:py-12 ${urdu ? "urdu-text" : ""}`}>
       <div className="max-w-5xl w-full grid grid-cols-1 gap-6 items-center lg:grid-cols-2 lg:gap-10">
         <div
           className="hidden lg:block h-full rounded-3xl p-10 shadow-lg"
